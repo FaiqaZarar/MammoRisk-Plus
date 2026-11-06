@@ -1,0 +1,40 @@
+# Module 2: PRS-313 reclassification, European (CEU) vs Pakistani reference (O1).
+# Run: python -m module2_prs.run --config configs/m2_prs.yaml --step all
+seed: 42
+n_boot: 1000
+
+# All relative paths below are resolved under data_root. Point it at the USB drive if needed,
+# e.g. data_root: "E:/mammorisk-data"
+data_root: "data"
+results_dir: "results/m2_prs"
+
+paths:
+  weights: "prs/PGS000004.txt.gz"            # GRCh37 author file. CLAUDE.md wants the GRCh38 harmonised one (D-13 open item)
+  work_dir: "genomics/prs313"
+  samples_list: "genomics/prs313/samples.txt"   # one IID per line (CEU + PJL + 8 HGDP groups)
+  sample_sheet: "genomics/prs313/sample_sheet.csv"  # IID, group, source, sex
+  target_pvar: "genomics/prs313/merged.pvar"
+  genotype_prefix: "genomics/prs313/merged"
+  read_freq: null                             # optional .afreq used for missing-genotype imputation
+  sscore: null                                # default: <results_dir>/prs313.sscore
+
+genotype_build: "GRCh37"     # must match the weights; check_build() stops on a mismatch
+fileset: "pfile"
+plink2_path: "plink2"        # Windows: full path to plink2.exe
+chr_prefix: ""               # "chr" for GRCh38 VCFs that name chromosomes chr1..chr22
+# Per-chromosome VCF URL with {chr}. Example (1000G phase 3, GRCh37). TO VERIFY before use:
+vcf_url_template: "https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz"
+
+# Palindromic A/T, C/G SNPs: keep (assume forward strand) | drop. PROPOSED: keep (D-14).
+ambiguous: "keep"
+
+ceu_label: "CEU"
+pakistani_groups: [PJL, Balochi, Brahui, Burusho, Hazara, Kalash, Makrani, Pathan, Sindhi]
+
+# Lower bound of each category on the reference percentile scale (fitted normal).
+# PROPOSED (D-14), pending Pukhraj / supervisor.
+categories:
+  low: 0.0
+  average: 0.20
+  elevated: 0.80
+  high: 0.99
