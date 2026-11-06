@@ -31,12 +31,15 @@ def read_eigenvec(path: str) -> pd.DataFrame:
     return df
 
 
-def flag_outliers(pcs: pd.DataFrame, groups: pd.Series, n_pcs: int = 2, k_sd: float = 4.0) -> pd.Series:
+def flag_outliers(pcs: pd.DataFrame, groups: pd.Series, n_pcs: int = 2, k_sd: float = 4.0,
+                  prefix: str = "PC") -> pd.Series:
     """True if any of the first ``n_pcs`` PCs is > ``k_sd`` SDs from the person's group mean.
 
     Flagged people are reported (and excluded in a sensitivity analysis), not silently dropped.
+    With the gnomAD callset, use ``prefix="global_PC"`` (gnomAD's genome-wide PCA scores), so no
+    genome-wide genotypes have to be downloaded.
     """
-    cols = [f"PC{i}" for i in range(1, n_pcs + 1)]
+    cols = [f"{prefix}{i}" for i in range(1, n_pcs + 1)]
     flags = pd.Series(False, index=pcs.index)
     for g, idx in groups.groupby(groups).groups.items():
         sub = pcs.loc[idx, cols]

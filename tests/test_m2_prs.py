@@ -169,3 +169,87 @@ def test_run_analyse_end_to_end(tmp_path):
         assert (out / f).exists(), f
     stats = json.loads((out / "reference_stats.json").read_text())
     assert set(stats["references"]) == {"european", "pakistani"}
+
+
+# ---------------- gnomAD sample sheet, extraction commands, drivers in analyse ----------------
+def _fake_gnomad_meta(path):
+    import gzip, json
+    rows = []
+    for i, (pop, project) in enumerate([("CEU", "1000 Genomes")] * 4 + [("PJL", "1000 Genomes")] * 3
+                                       + [("Kalash", "HGDP")] * 3 + [("Yoruba", "HGDP")]):
+        rows.append({
+            "s": f"S{i}", "high_quality": i != 1,
+            "relatedness_inference": json.dumps({"related": i == 2}),
+            "gnomad_sex_imputation": json.dumps({"sex_karyotype": "XX" if i % 2 else "XY"}),
+            "hgdp_tgp_meta": json.dumps({"population": pop, "project": project,
+                                         "global_pca_scores": [0.1 * i, -0.1 * i],
+                                         "subcontinental_pca": {"outlier": i == 9}})})
+    with gzip.open(path, "wt") as fh:
+        pd.DataFrame(rows).to_csv(fh, sep="\t", index=False)
+
+
+def test_sample_sheet_from_gnomad(tmp_path):
+    from module2_prs import data_prep
+    p = tmp_path / "meta.tsv.bgz"
+    _fake_gnomad_meta(p)
+    kept, full = data_prep.sample_sheet_from_gnomad(p, ["CEU", "PJL", "Kalash"])
+    assert "Yoruba" not in set(full.group)
+    assert set(full.loc[full.IID == "S1", "drop_reason"]) == {"low_quality;"}
+    assert set(full.loc[full.IID == "S2", "drop_reason"]) == {"related;"}
+    assert len(kept) == 8 and {"global_PC1", "global_PC2"} <= set(kept.columns)
+    assert kept.set_index("IID").loc["S9", "gnomad_subcont_outlier"]
+    assert set(kept.source) == {"1000G", "HGDP"}
+
+
+def test_extract_and_merge_commands():
+    from module2_prs import data_prep
+    ex = data_prep.bcftools_extract_commands("https://x/{chr}.vcf.bgz", "r.txt", "s.txt", "w", ["chr1"])
+    assert ex[0][-1] == "https://x/chr1.vcf.bgz" and "PASS" in ex[0]
+    mc = data_prep.merge_commands("w", ["chr1", "chr2"], "w/merged")
+    assert mc[0][-2:] == [str(Path("w/prs313_chr1.vcf.gz")), str(Path("w/prs313_chr2.vcf.gz"))]
+    assert "@:#:$r:$a" in mc[1]
+
+
+def test_read_export_a(tmp_path):
+    from module2_prs import data_prep
+    p = tmp_path / "d.raw"
+    p.write_text("FID\tIID\tPAT\tMAT\tSEX\tPHENOTYPE\tchr1:100:C:CAAA_C\tchr2:5:A:G_G\n"
+                 "0\ta\t0\t0\t0\t-9\t2\t0\n0\tb\t0\t0\t0\t-9\tNA\t1\n")
+    df, ids = data_prep.read_export_a(p)
+    assert ids == ["chr1:100:C:CAAA", "chr2:5:A:G"] and np.isnan(df.loc[1, "chr1:100:C:CAAA"])
+
+
+def test_analyse_with_drivers(tmp_path):
+    """Simulate plink outputs for 2 SNPs where SNP v1 differs in frequency between populations."""
+    import yaml
+    from module2_prs import run
+    rng = np.random.default_rng(5)
+    sizes = {"CEU": 120, "PJL": 97, **{g: 22 for g in PAK[1:]}}
+    rows = []
+    for g, n in sizes.items():
+        p1 = 0.2 if g == "CEU" else 0.5        # v1: big frequency difference
+        for _ in range(n):
+            rows.append((g, rng.binomial(2, p1), rng.binomial(2, 0.3)))
+    df = pd.DataFrame(rows, columns=["group", "v1", "v2"])
+    df["IID"] = [f"s{i}" for i in range(len(df))]
+    w = {"v1": 0.3, "v2": 0.1}
+    df["prs"] = df.v1 * w["v1"] + df.v2 * w["v2"] + rng.normal(0, 0.2, len(df))
+    out = tmp_path / "out"; out.mkdir()
+    pd.DataFrame({"#FID": df.IID, "IID": df.IID, "SCORE1_SUM": df.prs}).to_csv(out / "prs313.sscore", sep="\t", index=False)
+    raw = pd.DataFrame({"FID": df.IID, "IID": df.IID, "PAT": 0, "MAT": 0, "SEX": 0, "PHENOTYPE": -9,
+                        "v1_A": df.v1, "v2_G": df.v2})
+    raw.to_csv(out / "prs313_dosage.raw", sep="\t", index=False)
+    pd.DataFrame({"target_id": ["v1", "v2"], "weight": [0.3, 0.1], "chr": ["1", "2"], "pos": [1, 2],
+                  "effect_allele": ["A", "G"], "other_allele": ["C", "T"]}).to_csv(out / "harmonised_variants.csv", index=False)
+    sheet = df[["IID", "group"]].assign(ancestry_outlier=False, gnomad_subcont_outlier=False)
+    sheet.loc[0, "ancestry_outlier"] = True
+    sheet.to_csv(tmp_path / "sheet.csv", index=False)
+    cfg = {"data_root": str(tmp_path), "results_dir": str(out), "n_boot": 20,
+           "paths": {"weights": str(WEIGHTS.resolve()), "sample_sheet": "sheet.csv", "work_dir": "w"},
+           "pakistani_groups": PAK}
+    (tmp_path / "c.yaml").write_text(yaml.safe_dump(cfg))
+    run.main(["--config", str(tmp_path / "c.yaml"), "--step", "analyse"])
+    d = pd.read_csv(out / "driver_snps.csv")
+    assert d.variant_id.iloc[0] == "v1"            # v1 drives the shift
+    assert (out / "reclassification_excl_ancestry_outliers.csv").exists()
+    assert (out / "effect_allele_freq_by_group.csv").exists()
