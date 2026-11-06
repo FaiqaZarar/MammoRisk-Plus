@@ -193,8 +193,12 @@ MammoRisk-Plus/
 - Env (imaging, Windows + CUDA): `conda env create -f environment-imaging.yml && conda activate mammorisk-imaging`
 - Env (genomics, macOS): `conda env create -f environment-genomics.yml && conda activate mammorisk-genomics`
   (Windows: standalone plink2 binary, see data/README.md)
-- Tests: `pytest tests/`
-- PRS: `python -m module2_prs.run --config configs/m2_prs.yaml`
+- Tests: `pytest tests/` (on Faiqa's laptop: `.venv/Scripts/python -m pytest`, see D-17)
+- PRS: `python -m module2_prs.run --config configs/m2_prs.yaml --step all|regions|harmonise|score|analyse`
+- M1 cohort: `python -m module1_mirai.embed_cohort --config configs/m1_mirai_embed.yaml`
+- M1 evaluate: `python -m module1_mirai.evaluate --config configs/m1_mirai_embed.yaml`
+- M3 split: `python -m module3_classifier.splits --config configs/m3_effnetb3.yaml`
 - Train M3: `python -m module3_classifier.train --config configs/m3_effnetb3.yaml`
-- Evaluate: `python -m evaluation.run --module 3 --checkpoint <path>`
+- Evaluate M3: `python -m module3_classifier.evaluate run|compare ...` (see `--help`)
+- Explain M3: `python -m module3_classifier.explain --config ... --dataset cbis|vindr|dmid`
 - App: `docker compose up` or `flask --app app run --debug`

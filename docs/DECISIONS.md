@@ -122,6 +122,80 @@ Source of truth for scope: the revised literature review (synopsis version) + th
   harmonised file CLAUDE.md specifies). It has not been replaced yet. See open items.
 - **Decided by:** Faiqa
 
+## Code build-out (2026-11-06). Proposed while Pukhraj and Manaal were unavailable
+
+Entries D-14 to D-17 were made by Faiqa (with Claude Code) so the work wasn't blocked. Each is marked
+**PROPOSED** where the module owner still has to confirm it.
+
+### D-14 · 2026-11-06 · Module 2 methods details (PROPOSED, needs Pukhraj's review)
+- **Risk categories** on the reference percentile scale (fitted normal): low < 20th, average 20th–80th,
+  elevated 80th–99th, high ≥ 99th (top 1%). These follow the percentile bands Mavaddat 2019 reports.
+  Config-driven (`configs/m2_prs.yaml`). Alternatives: deciles only, or Mavaddat's 11 bands (too many
+  for groups of ~22 people).
+- **Palindromic A/T, C/G SNPs (31 of 313):** `keep`, assuming the forward strand, because the PGS
+  Catalog, 1000G and HGDP all report forward-strand alleles. `drop` is a sensitivity analysis.
+  Resolving them by allele frequency was **rejected**: PGS000004 frequencies are European, and
+  frequency differences between populations are exactly what O1 measures.
+- **Indels (48 of 313):** exact allele match after `bcftools norm`, never complemented.
+- **Bootstrap:** each resample re-draws CEU and all 9 groups (stratified by group) and **re-fits
+  both references**, so the CI includes uncertainty in the reference mean/SD, not only in the targets.
+- **Raw score = plink2 SUM** (`cols=+scoresums`), not plink's default per-allele average.
+- **Data:** extract only the 313 positions from the remote tabix-indexed VCFs (`bcftools view -R`),
+  which is megabytes, not whole-genome downloads. PCA still needs genome-wide common SNPs.
+- **Driver SNPs:** exact decomposition Δmean = Σ 2β_j(p_PAK − p_CEU), in CEU-SD units.
+- **Decided by:** Faiqa (proposed). **Pukhraj to confirm.**
+
+### D-15 · 2026-11-06 · Module 1 cohort and metric rules (PROPOSED)
+- C-index = Uno's IPCW version, τ = 5 y, ranked on Mirai's 5-year risk (as in Yala 2021/2022). Harrell's
+  C is also reported. td-AUC at year t uses Mirai's t-year risk.
+- All of a woman's screening exams are kept, and CIs are **clustered by patient** (1,000
+  resamples). Alternative: one random exam per woman (loses events).
+- Exams after a woman's first cancer are excluded. Same-day cancers are events at t = 0.5 days.
+  `min_days_to_event` (e.g. 180) is a sensitivity analysis that tests prediction rather than detection.
+- Censoring is at the woman's last exam of any type. Duplicate view images: keep the first by
+  sorted path.
+- Subgroups with fewer than 5 cancers: counts only, flagged exploratory, no CI.
+- Vendor: Hologic / Other / Mixed. **EMBED "Asian" is not South Asian.** Say so wherever it's reported.
+- EMBED column names and the OncoServe API are **TO VERIFY** on the real files (`COLUMNS` dict, config).
+- **Decided by:** Faiqa (proposed)
+
+### D-16 · 2026-11-06 · Platform design (PROPOSED, needs Manaal's review)
+- Validation labels are enforced in code: no result can be shown or printed without a label, and a
+  label can only say "validated" with a value + source (which must trace to STATUS.md).
+- Adapters say "model not available" instead of showing placeholder numbers.
+- A minimal session login (werkzeug hashes from env) and custom CSRF, with no Flask-Login/WTF
+  dependency. Results are kept in the session cookie for the PDF (to move server-side once heatmaps
+  are shown). The PDF uses fpdf2. Uploads go to tmp/tmpfs and are deleted after each request.
+  Weights are mounted read-only, never baked into the image.
+- **Decided by:** Faiqa (proposed). **Manaal to confirm** (Flask-Login/DB vs current).
+
+### D-18 · 2026-11-06 · Module 3 implementation details (PROPOSED)
+- CBIS-DDSM's official train/test split is **not used**. Mass + calc are merged by patient, then split
+  70/10/20 at patient level, stratified by patient label (CLAUDE.md).
+- Preprocessing: all breasts are flipped to face left, padded to keep the aspect ratio at ~1024×512,
+  and saved as 16-bit PNGs. Masks get the same transforms. Horizontal-flip augmentation is kept (as
+  CLAUDE.md specifies), even though it undoes the canonical orientation for that sample.
+- Training: balanced class weights, AdamW, cosine schedule with warm-up, gradient accumulation
+  (effective batch 32), AMP.
+- Test AUC is reported with **both** a DeLong CI and a patient-clustered bootstrap CI.
+- CAM target layer = last feature map before pooling (`bn2` EfficientNet-B3, `layer4[-1]` ResNet-50).
+  The sanity check uses Grad-CAM only (Score-CAM is too slow for layer-by-layer randomisation).
+- VinDr-Mammo has no biopsy labels, so for explanation scoring "malignant" = a Mass or Suspicious
+  Calcification finding with BI-RADS ≥ 4. VinDr images/overlays are never exported. DMID normals are
+  excluded from the AUC.
+- Dataset column names (CBIS, CMMD, DMID, VinDr) are **TO VERIFY** on the real files.
+- **Decided by:** Faiqa (proposed). Manaal supports Module 3.
+
+### D-17 · 2026-11-06 · Data storage and local test environment
+- Raw datasets live on an external **USB drive (NTFS/exFAT), not OneDrive**. OneDrive on-demand files
+  get downloaded back onto the laptop when read, and it is slow with many small DICOMs. Every config has
+  a data path or `data_root`, so changing the drive means editing the config only.
+- CBIS-DDSM training on Kaggle/Colab. Only the downsampled PNG cache is kept locally.
+- Local tests run in a project `.venv` (Python 3.13, gitignored) because conda/torch aren't on this
+  laptop. scikit-survival is installed with `--no-deps`, since its `ecos` solver doesn't build on
+  Windows/3.13 and only the metrics are used. The conda env files remain the reference environments.
+- **Decided by:** Faiqa
+
 ---
 
 ## Deviations from the FIRST (July) literature review
@@ -146,4 +220,8 @@ Source of truth for scope: the revised literature review (synopsis version) + th
 - [ ] D-13: committed PGS000004 is GRCh37 (author-reported). Use the GRCh38 harmonised file (CLAUDE.md) or
   keep GRCh37? It must match the genotype build (1000G phase 3 = GRCh37; HGDP/1kG high-coverage = GRCh38).
 - [ ] D-13: Pukhraj to review `module2_prs/legacy_prsice/`
-- [ ] Any feedback from the synopsis defence panel, which should be recorded here as D-14 onwards
+- [ ] D-14: Pukhraj to confirm risk categories, palindromic policy, bootstrap design
+- [ ] D-15: verify EMBED column names + OncoServe API on real files
+- [ ] D-16: Manaal to confirm login/CSRF approach and UI wording
+- [ ] D-18: verify CBIS-DDSM / CMMD / DMID / VinDr column names; first torch run on Kaggle/Colab
+- [ ] Any feedback from the synopsis defence panel, which should be recorded here as the next free D-number

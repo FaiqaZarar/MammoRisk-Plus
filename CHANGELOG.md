@@ -2,6 +2,21 @@
 
 Newest first. One entry per meaningful change: date · module · what changed · files touched.
 
+## 2026-11-06 (code build-out)
+- **Evaluation:** `evaluation/` with DeLong AUC CI + paired test, Youden threshold, threshold metrics,
+  stratified/clustered bootstrap, IPCW C-index, td-AUC, KM calibration, subgroup table, XAI scores, seeds.
+  Tests: `tests/test_evaluation.py`. Also `pyproject.toml` (pytest config).
+- **M2:** plink2 PRS-313 pipeline `module2_prs/{weights,harmonise,score,standardise,reclassify,drivers,
+  ancestry,data_prep,run}.py`, `configs/m2_prs.yaml`, `tests/test_m2_prs.py`. Writes
+  `reference_stats.json` for the app. Proposed methods in D-14.
+- **M1:** `module1_mirai/{embed_cohort,oncoserve,evaluate}.py`, `gradcam_notes.md`,
+  `configs/m1_mirai_embed.yaml`, `tests/test_m1_cohort.py` (D-15).
+- **M3:** `module3_classifier/{config,cbis,splits,preprocess,datasets,models,train,evaluate,explain}.py`,
+  `configs/m3_{effnetb3,resnet50}.yaml`, `tests/test_m3_data.py` (D-18).
+- **Platform:** Flask app in `app/`, `Dockerfile`, `docker-compose.yml`, `.dockerignore`,
+  `configs/app.yaml`, `tests/test_app_routes.py` (D-16).
+- **Docs:** DECISIONS D-14 to D-18, STATUS rows, CLAUDE.md commands.
+
 ## 2026-11-06
 - **Docs:** README.md rewritten to match CLAUDE.md and D-07 to D-11 (drops RSNA training, the C-index
   target, suspicious vs normal / AUC > 0.85, PRSice-2 and "from scratch"). Added D-13 and new open items to

@@ -5,12 +5,13 @@ App release: end of January 2027 · Papers + thesis: Feb–May 2027
 
 | Module / Objective | Owner | Planned | Status | Latest result | Next step |
 |---|---|---|---|---|---|
-| Data access | Faiqa | Oct | _fill in_ | — | PhysioNet (VinDr), EMBED registration; downloads |
-| M2 · PRS (O1, core) | Pukhraj | Oct–Nov | chr1 PRSice-2 pilot only (now frozen in `module2_prs/legacy_prsice/`); plink2 pipeline not started | — (pilot scores not a result) | Pukhraj reviews legacy pilot; decide GRCh37 vs GRCh38 harmonised weights; build plink2 `--score` pipeline over all 313 SNPs |
-| M1 · Mirai on EMBED (O4) | Faiqa | Nov–Dec | _fill in_ | — | — |
-| M3 · Classifier (O2) | Faiqa, Manaal | Nov–Jan | _fill in_ | — | — |
-| M3 · Explanations (O3) | Faiqa, Manaal | Nov–Jan | _fill in_ | — | — |
-| Platform (O5) | Manaal | Dec–Jan | _fill in_ | — | — |
+| Data access | Faiqa | Oct | Not started. Storage plan: raw data on USB drive, training on Kaggle/Colab (D-17) | — | PhysioNet (VinDr), EMBED registration; extract 313 PRS positions with bcftools (needs Mac/WSL) |
+| M2 · PRS (O1, core) | Pukhraj | Oct–Nov | **Code done, no data yet.** plink2 pipeline in `module2_prs/` (14 tests pass); legacy chr1 PRSice pilot frozen for review | — | Pukhraj reviews D-14; choose GRCh37 vs GRCh38 weights; build sample sheet + extract genotypes; `python -m module2_prs.run --config configs/m2_prs.yaml` |
+| M1 · Mirai on EMBED (O4) | Faiqa | Nov–Dec | **Code done, no data yet.** Cohort builder, OncoServe client, evaluation (6 tests pass) | — | Get EMBED tables; verify `COLUMNS` + OncoServe API (D-15); install Docker |
+| M3 · Classifier (O2) | Faiqa, Manaal | Nov–Jan | **Code written, not run.** splits/preprocess/train/evaluate (10 data tests pass; torch code untested) | — | Download CBIS-DDSM (to USB/Kaggle); verify columns; first training run on Kaggle/Colab GPU |
+| M3 · Explanations (O3) | Faiqa, Manaal | Nov–Jan | **Code written, not run.** Grad-CAM/Score-CAM + scores (`evaluation/xai.py` tested) | — | Run after first trained checkpoint; VinDr after PhysioNet access |
+| Platform (O5) | Manaal | Dec–Jan | **Skeleton done.** Flask app, enforced validation labels, login/CSRF, PDF, Docker (19 tests pass; Docker untested) | — | Manaal reviews D-16; wire adapters once models exist |
+| Evaluation (shared) | Faiqa | — | **Done.** DeLong, bootstrap, IPCW C-index, td-AUC, calibration, XAI scores (14 tests pass) | — | — |
 
 ## Done (as of synopsis defence, 5 Oct 2026)
 - Literature review revised (45 references verified)
@@ -21,6 +22,8 @@ App release: end of January 2027 · Papers + thesis: Feb–May 2027
 - EMBED open 20% release located on AWS
 
 ## Repo (2026-11-06)
+- Code for all modules written while Pukhraj/Manaal were away; their decisions marked PROPOSED
+  (D-14 to D-18). Local tests: `.venv/Scripts/python -m pytest` → 63 passed, 1 skipped (torch).
 - Restructured to the CLAUDE.md layout. `src/fusion` removed. Environments split into imaging (Windows +
   CUDA) and genomics (macOS). PDFs are kept locally only. See D-13.
 
