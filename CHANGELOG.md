@@ -2,6 +2,15 @@
 
 Newest first. One entry per meaningful change: date · module · what changed · files touched.
 
+## 2026-11-07
+- **M2:** Switched to GRCh38: added `data/prs/PGS000004_hmPOS_GRCh38.txt.gz` (harmonised, 313/313 mapped) and
+  genotypes from the gnomAD v3.1.2 HGDP+1KG callset (D-19). New pipeline steps `samples`, `extract`,
+  `dosage`; driver SNPs and an ancestry-outlier sensitivity analysis in `analyse`; `--data-root` /
+  `--results-dir` overrides. Files: `module2_prs/{data_prep,run,ancestry}.py`, `configs/m2_prs.yaml`,
+  `tests/test_m2_prs.py`.
+- **M2:** Added `notebooks/m2_prs_colab.ipynb` (bcftools + plink2 Beta 1.3 on Colab, end-to-end run).
+- **Docs:** D-19, deviation row 12, D-13 open item closed, M2 row in STATUS, data/README.
+
 ## 2026-11-06 (code build-out)
 - **Evaluation:** `evaluation/` with DeLong AUC CI + paired test, Youden threshold, threshold metrics,
   stratified/clustered bootstrap, IPCW C-index, td-AUC, KM calibration, subgroup table, XAI scores, seeds.

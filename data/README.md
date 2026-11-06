@@ -21,10 +21,16 @@ licence) and EMBED images must never be shown or committed.
 RSNA 2022 is **not** used, because it has no follow-up times (see DECISIONS D-07).
 
 ### PRS-313 weights: genome build
-`data/prs/PGS000004.txt.gz` is the **author-reported GRCh37** scoring file (`#genome_build=GRCh37`),
-**not** the GRCh38 harmonised file specified in CLAUDE.md. It has not been replaced yet. Before
-scoring, the weights' build must match the genotypes. 1000G phase 3 is GRCh37, while the 1000G
-high-coverage and HGDP releases are GRCh38.
+- **In use:** `data/prs/PGS000004_hmPOS_GRCh38.txt.gz`, the PGS Catalog harmonised GRCh38 file (all 313
+  variants mapped), which matches the gnomAD GRCh38 genotypes (DECISIONS D-19).
+- Kept for reference: `data/prs/PGS000004.txt.gz`, the author-reported GRCh37 file. Don't score
+  GRCh38 genotypes with it, because the positions differ (`check_build` refuses).
+
+### Module 2 genotypes: gnomAD v3.1.2 HGDP+1KG (GRCh38)
+CEU, PJL and the 8 HGDP Pakistani groups were jointly called in one public, tabix-indexed callset
+(3.63 TB in total). We **never download it whole**: `python -m module2_prs.run --step extract` fetches only
+the 313 positions with `bcftools view -R` (a few MB). The easiest place to run it is Colab:
+`notebooks/m2_prs_colab.ipynb`. The sample metadata (3.4 MB) is downloaded by `--step samples`.
 
 ## Storage
 CBIS-DDSM alone is ~164 GB as DICOM, and SINES only gives ~20 GB. Cache downsampled PNGs under

@@ -1,12 +1,12 @@
 # Project Status: MammoRisk+
-_Last updated: 2026-11-06_
+_Last updated: 2026-11-07_
 
 App release: end of January 2027 · Papers + thesis: Feb–May 2027
 
 | Module / Objective | Owner | Planned | Status | Latest result | Next step |
 |---|---|---|---|---|---|
 | Data access | Faiqa | Oct | Not started. Storage plan: raw data on USB drive, training on Kaggle/Colab (D-17) | — | PhysioNet (VinDr), EMBED registration; extract 313 PRS positions with bcftools (needs Mac/WSL) |
-| M2 · PRS (O1, core) | Pukhraj | Oct–Nov | **Code done, no data yet.** plink2 pipeline in `module2_prs/` (14 tests pass); legacy chr1 PRSice pilot frozen for review | — | Pukhraj reviews D-14; choose GRCh37 vs GRCh38 weights; build sample sheet + extract genotypes; `python -m module2_prs.run --config configs/m2_prs.yaml` |
+| M2 · PRS (O1, core) | Pukhraj | Oct–Nov | **Ready to run on Colab.** GRCh38 + gnomAD HGDP+1KG callset (D-19); samples step run on real metadata: 394 people (CEU 121, Pakistani pooled 273) | — (no PRS scores yet) | Run `notebooks/m2_prs_colab.ipynb`; record coverage + % reclassified here; Pukhraj reviews D-14/D-19 |
 | M1 · Mirai on EMBED (O4) | Faiqa | Nov–Dec | **Code done, no data yet.** Cohort builder, OncoServe client, evaluation (6 tests pass) | — | Get EMBED tables; verify `COLUMNS` + OncoServe API (D-15); install Docker |
 | M3 · Classifier (O2) | Faiqa, Manaal | Nov–Jan | **Code written, not run.** splits/preprocess/train/evaluate (10 data tests pass; torch code untested) | — | Download CBIS-DDSM (to USB/Kaggle); verify columns; first training run on Kaggle/Colab GPU |
 | M3 · Explanations (O3) | Faiqa, Manaal | Nov–Jan | **Code written, not run.** Grad-CAM/Score-CAM + scores (`evaluation/xai.py` tested) | — | Run after first trained checkpoint; VinDr after PhysioNet access |

@@ -196,6 +196,31 @@ Entries D-14 to D-17 were made by Faiqa (with Claude Code) so the work wasn't bl
   Windows/3.13 and only the metrics are used. The conda env files remain the reference environments.
 - **Decided by:** Faiqa
 
+### D-19 · 2026-11-07 · Module 2 genotypes = gnomAD v3.1.2 HGDP+1KG callset on GRCh38
+- **Decision:** take CEU, PJL and the 8 HGDP Pakistani groups from the **jointly called gnomAD v3.1.2
+  HGDP+1KG subset (GRCh38)**, and score with the **PGS000004 GRCh38 harmonised** file. This resolves the
+  D-13 open item (GRCh37 vs GRCh38) in favour of CLAUDE.md's GRCh38.
+- **Alternatives:** (a) 1000G phase 3 (GRCh37) + Bergström 2020 HGDP (GRCh38), which would mean two
+  builds and two calling pipelines; (b) 1000G 30x NYGC + Bergström HGDP, the same build but still two
+  pipelines.
+- **Reason:** with separately called datasets, part of the CEU vs Pakistani PRS difference could be a
+  **batch effect** (different sequencing and variant calling), which would confound O1. One joint
+  callset removes that. It is public, and tabix-indexed per chromosome, so `bcftools view -R` fetches
+  only the 313 positions out of 3.63 TB.
+- **Samples:** gnomAD `high_quality` and `related` flags applied. Result (2026-11-07): CEU 121, PJL 97,
+  Balochi 23, Brahui 23, Burusho 24, Hazara 16, Kalash 21, Makrani 22, Pathan 24, Sindhi 23. That gives
+  **Pakistani pooled 273**, 394 in total. Note: CEU is 121 rather than 1000G phase 3's 99, because the 30x
+  release adds samples. Counts differ slightly from CLAUDE.md (PJL 96 → 97).
+- **Both sexes are used.** PRS-313 is entirely autosomal, and the HGDP groups are mostly men (women
+  only would leave ~4 per HGDP group). This is a deviation worth stating in the thesis.
+- **Ancestry check:** gnomAD's genome-wide PCA scores + its subcontinental outlier flag, plus our >4 SD
+  within-group flag on the first 2 PCs, so no genome-wide download is needed. Flagged people are kept in the
+  main analysis and excluded in a sensitivity analysis (0 flagged on 2026-11-07).
+- **Variant QC:** only gnomAD PASS sites. A failing PRS SNP counts as missing (2·EAF) and lowers coverage.
+- **Where it runs:** Colab (`notebooks/m2_prs_colab.ipynb`): Ubuntu bcftools + plink2 Beta 1.3
+  (2026-10-31, generic Linux build).
+- **Decided by:** Faiqa (with Claude Code), 2026-11-07. Pukhraj to review.
+
 ---
 
 ## Deviations from the FIRST (July) literature review
@@ -212,13 +237,13 @@ Entries D-14 to D-17 were made by Faiqa (with Claude Code) so the work wasn't bl
 | 9 | Grad-CAM only, visual inspection | Grad-CAM + Score-CAM, quantitative scores | D-11 |
 | 10 | Datasets: CBIS-DDSM, RSNA, EMBED, 1000G | + VinDr-Mammo, DMID, HGDP, (CMMD); RSNA dropped | D-07, D-11 |
 | 11 | Platform/paper Dec 2026–Jan 2027 | App Jan 2027; papers + thesis Feb–May 2027 | D-06 |
+| 12 | Genotypes: 1000G PJL (96) + CEU, HGDP separately | One jointly called gnomAD HGDP+1KG GRCh38 callset; CEU 121, PJL 97, HGDP 176; both sexes | D-19 |
 
 ## Open items to confirm
 - [ ] D-11: final objective numbering, ConvNeXt yes/no, CMMD yes/no
 - [ ] D-10: pgsc_calc or plink2 only
 - [ ] D-06: Table 7 in the review updated to the January release?
-- [ ] D-13: committed PGS000004 is GRCh37 (author-reported). Use the GRCh38 harmonised file (CLAUDE.md) or
-  keep GRCh37? It must match the genotype build (1000G phase 3 = GRCh37; HGDP/1kG high-coverage = GRCh38).
+- [x] D-13: GRCh37 vs GRCh38. Resolved by D-19: GRCh38 harmonised weights + gnomAD GRCh38 callset.
 - [ ] D-13: Pukhraj to review `module2_prs/legacy_prsice/`
 - [ ] D-14: Pukhraj to confirm risk categories, palindromic policy, bootstrap design
 - [ ] D-15: verify EMBED column names + OncoServe API on real files
