@@ -1,0 +1,24 @@
+# MammoRisk+ genomics environment: Module 2 (PRS-313, O1).
+# Target: macOS (Pukhraj's laptop). Also works on Linux.
+#
+#   conda env create -f environment-genomics.yml
+#   conda activate mammorisk-genomics
+#   plink2 --version && bcftools --version
+#
+# Apple Silicon: if bioconda has no osx-arm64 build for a package, create the env under Rosetta:
+#   CONDA_SUBDIR=osx-64 conda env create -f environment-genomics.yml
+# Windows: bioconda doesn't build for Windows. Use the standalone plink2 binary (see data/README.md).
+name: mammorisk-genomics
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - plink2               # scoring: plink2 --score with PGS000004 weights (D-10)
+  - bcftools             # VCF normalisation, strand/allele checks, merging 1000G + HGDP
+  - numpy
+  - pandas
+  - matplotlib
+  - scipy                # stratified bootstrap CIs
+  - pyyaml               # configs/m2_prs.yaml
+  - pytest

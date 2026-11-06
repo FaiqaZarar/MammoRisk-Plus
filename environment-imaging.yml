@@ -1,0 +1,42 @@
+# MammoRisk+ imaging environment: Module 1 (Mirai evaluation, Grad-CAM), Module 3 (classifier + XAI),
+# shared evaluation and the Flask platform.
+# Target: Windows + NVIDIA GPU (CUDA 12.1 wheels). Also works on Colab/Kaggle/Linux.
+#
+#   conda env create -f environment-imaging.yml
+#   conda activate mammorisk-imaging
+#   python -c "import torch; print(torch.cuda.is_available())"
+#
+# Mirai inference itself runs in the OncoServe Docker image (learn2cure/oncoserve_mirai:0.5.0),
+# which ships Mirai's older dependency stack, so it is not installed here.
+# Without a GPU: replace the cu121 index URL below with https://download.pytorch.org/whl/cpu
+name: mammorisk-imaging
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  # data + stats
+  - numpy
+  - pandas
+  - scipy
+  - scikit-learn
+  - scikit-survival      # IPCW C-index, cumulative/dynamic (time-dependent) AUC for Mirai (O4)
+  - lifelines            # Kaplan-Meier / censoring checks, C-index cross-check
+  - matplotlib
+  - pyyaml
+  - tqdm
+  # imaging
+  - pydicom
+  - opencv
+  - pillow
+  # platform
+  - flask
+  # tracking + tests
+  - wandb
+  - pytest
+  - pip:
+      - --extra-index-url https://download.pytorch.org/whl/cu121
+      - torch>=2.2,<3
+      - torchvision
+      - timm                 # ResNet-50 / EfficientNet-B3 ImageNet backbones
+      - grad-cam             # pytorch-grad-cam: Grad-CAM + Score-CAM
