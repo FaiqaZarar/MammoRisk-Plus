@@ -86,6 +86,10 @@ def step_analyse(cfg, out: Path, sf=None) -> dict:
     refs = {"european": standardise.fit_reference("european", df.loc[df.group == cfg.get("ceu_label", "CEU"), "prs"]),
             "pakistani": standardise.fit_reference("pakistani", df.loc[df.group.isin(groups), "prs"])}
     standardise.standardise_all(df, refs, cats).to_csv(out / "per_person.csv", index=False)
+    # Reference mean/SD + categories for the platform (app reads results/m2_prs/reference_stats.json).
+    (out / "reference_stats.json").write_text(json.dumps(
+        {"references": {k: vars(v) for k, v in refs.items()}, "categories": cats,
+         "weights": cfg["paths"]["weights"]}, indent=2))
     normality = {k: standardise.normality_check(df.loc[(df.group == cfg.get("ceu_label", "CEU")) if k == "european"
                                                        else df.group.isin(groups), "prs"]) for k in refs}
     return {"n_people": len(df), "n_per_group": df.group.value_counts().to_dict(),

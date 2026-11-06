@@ -145,3 +145,27 @@ def test_driver_decomposition_is_exact():
     assert d.attrs["total_shift"] == pytest.approx(expected)
     assert d.share_of_shift.sum() == pytest.approx(1.0)
     assert d.contribution.abs().is_monotonic_decreasing
+
+
+# ---------------- end-to-end analyse step ---------------------------------------------------
+def test_run_analyse_end_to_end(tmp_path):
+    import json
+    import yaml
+    from module2_prs import run
+    df = _synthetic_cohort(0.5)
+    sscore = tmp_path / "x.sscore"
+    pd.DataFrame({"#FID": df.IID, "IID": df.IID, "ALLELE_CT": 626, "SCORE1_SUM": df.prs}).to_csv(
+        sscore, sep="\t", index=False)
+    df[["IID", "group"]].to_csv(tmp_path / "sheet.csv", index=False)
+    cfg = {"data_root": str(tmp_path), "results_dir": str(tmp_path / "out"), "n_boot": 20,
+           "paths": {"weights": str(WEIGHTS.resolve()), "sscore": "x.sscore",
+                     "sample_sheet": "sheet.csv"},
+           "pakistani_groups": PAK, "genotype_build": "GRCh37"}
+    (tmp_path / "c.yaml").write_text(yaml.safe_dump(cfg))
+    run.main(["--config", str(tmp_path / "c.yaml"), "--step", "analyse"])
+    out = tmp_path / "out"
+    for f in ("reclassification.csv", "crosstab_european_vs_pakistani.csv", "per_person.csv",
+              "own_group_sensitivity.csv", "reference_stats.json", "run_info_analyse.json"):
+        assert (out / f).exists(), f
+    stats = json.loads((out / "reference_stats.json").read_text())
+    assert set(stats["references"]) == {"european", "pakistani"}
