@@ -1,0 +1,34 @@
+# Module 1: pre-trained Mirai, external validation on the EMBED open 20% subset (O4).
+# No retraining and no split (DECISIONS D-07). Paths are local; data/ and results/ are gitignored.
+dataset: EMBED open 20% subset
+
+data:
+  embed_metadata_csv: data/embed/tables/EMBED_OpenData_metadata.csv   # TO VERIFY file name
+  embed_clinical_csv: data/embed/tables/EMBED_OpenData_clinical.csv   # TO VERIFY file name
+  dicom_root: data/embed/images        # anon_dicom_path is resolved relative to this
+  cohort_csv: data/processed/m1_embed_cohort.csv
+  predictions_csv: data/processed/m1_embed_mirai_predictions.csv
+
+cohort:
+  # Exclude exams whose cancer was diagnosed fewer than N days after the exam.
+  # 0 = main analysis (count every cancer on/after the exam date). Sensitivity analysis: e.g. 180.
+  min_days_to_event: 0
+  drop_zero_followup: true
+
+oncoserve:
+  image: learn2cure/oncoserve_mirai:0.5.0
+  url: http://localhost:5000/serve      # TO VERIFY endpoint path in the OncoServe README
+  timeout_s: 300
+  retries: 3
+
+evaluation:
+  tau: 5.0            # C-index truncation horizon (years), uses risk_5y
+  n_boot: 1000        # bootstrap resamples, clustered by patient
+  seed: 42
+  n_bins: 10          # calibration deciles
+  min_events: 5       # subgroups with fewer cancers are flagged exploratory_only (no CI)
+  subgroups: [density, race, vendor]
+
+output:
+  results_dir: results
+  run_name: m1_mirai_embed
