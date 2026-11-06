@@ -1,0 +1,77 @@
+# Module 3: EfficientNet-B3 benign vs malignant on CBIS-DDSM full mammograms (O2, O3).
+# All paths are relative to the repo root unless absolute. data/ and results/ are gitignored.
+run_name: m3_effnetb3_seed42
+seed: 42
+overwrite_split: false            # splits are made once and reused by every M3 experiment
+
+model:
+  name: efficientnet_b3           # resnet50 | efficientnet_b3 | convnext_tiny (D-11 open)
+  pretrained: true                # ImageNet weights, fine-tuned
+  drop_rate: 0.2
+
+data:
+  cbis_csvs:                      # official TCIA description CSVs
+    - data/raw/cbis_ddsm/mass_case_description_train_set.csv
+    - data/raw/cbis_ddsm/mass_case_description_test_set.csv
+    - data/raw/cbis_ddsm/calc_case_description_train_set.csv
+    - data/raw/cbis_ddsm/calc_case_description_test_set.csv
+
+split:
+  fractions: [0.7, 0.1, 0.2]      # train / val / test, patient-level, stratified
+
+paths:
+  cbis_dicom_root: data/raw/cbis_ddsm/CBIS-DDSM
+  cache_dir: data/processed/cbis_png_1024x512
+  split_csv: splits/m3_cbis_split.csv
+  results_dir: results/m3
+
+image:
+  height: 1024
+  width: 512
+  canonical_flip: true            # breast always on the left
+
+augmentation:                     # TRAIN ONLY
+  hflip: 0.5
+  vflip: 0.5
+  rotation_deg: 15
+  brightness: 0.2
+  contrast: 0.2
+
+train:
+  batch_size: 8                   # small: 1024x512 inputs on a consumer / Colab GPU
+  accum_steps: 4                  # effective batch 32
+  num_workers: 2
+  max_epochs: 50
+  warmup_epochs: 1
+  patience: 10                    # early stopping on val AUC
+  lr: 1.0e-4
+  weight_decay: 1.0e-4
+  amp: true
+
+eval:
+  n_boot: 1000                    # patient-clustered bootstrap resamples
+
+external:                         # index CSVs are built when caching each set; boxes in cached coords
+  cmmd:
+    index_csv: data/processed/cmmd_png_1024x512/index.csv
+    root: data/processed/cmmd_png_1024x512
+  dmid:
+    index_csv: data/processed/dmid_png_1024x512/index.csv
+    root: data/processed/dmid_png_1024x512
+    include_normals: false        # 2-class AUC excludes normals
+  vindr:                          # explanations only (no biopsy labels → no AUC). Never export images.
+    index_csv: data/processed/vindr_png_1024x512/index.csv
+    root: data/processed/vindr_png_1024x512
+    explain_only: true
+
+xai:
+  methods: [gradcam, scorecam]
+  iou_top_fraction: 0.5           # IoU on the top 50% of heatmap pixels (threshold reported)
+  pointing_tol: 0                 # pixels of tolerance for the Pointing Game
+  scorecam_batch_size: 32
+  n_sanity: 20                    # images for the cascading randomisation check
+  save_overlays: false            # never applies to VinDr
+
+wandb:
+  enabled: false
+  project: mammorisk-m3
