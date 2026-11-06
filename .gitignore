@@ -1,51 +1,173 @@
-# -----------------------------
-# Python
-# -----------------------------
-__pycache__/
-*.py[cod]
-*.pyo
+# =====================================================================
+# MammoRisk+ .gitignore
+# Public repo. NEVER commit: datasets, images (esp. VinDr-Mammo / EMBED,
+# PhysioNet & EMBED licences), genomes, patient files, model weights,
+# API keys / secrets. See CLAUDE.md "Hard constraints".
+# =====================================================================
 
-# -----------------------------
-# R
-# -----------------------------
-.RData
-.Rhistory
+# ---------------------------------------------------------------------
+# Data: everything under data/ is ignored except docs and placeholders.
+# data/README.md explains how to obtain each dataset.
+# ---------------------------------------------------------------------
+data/**
+!data/**/
+!data/README.md
+!data/**/.gitkeep
+# PGS000004 (PRS-313 weights) is a small, public PGS Catalog file, already
+# tracked. Kept as an explicit exception so it stays versioned with the code.
+!data/prs/PGS000004*
+!data/prs/PGS000004*/**
 
-# -----------------------------
-# Virtual Environments
-# -----------------------------
-venv/
-.env/
+# Legacy data folders used by the genomics scripts (C:\MammoRiskPlus\...)
+data/raw/
+data/genotypes/
 
-# -----------------------------
-# Genomics Data
-# -----------------------------
+# ---------------------------------------------------------------------
+# Literature review / defence deck PDFs: kept locally in docs/, never
+# committed (decided 2026-11-06, see D-13).
+# ---------------------------------------------------------------------
+docs/*.pdf
+
+# ---------------------------------------------------------------------
+# Medical images (anywhere in the repo)
+# ---------------------------------------------------------------------
+*.dcm
+*.dicom
+*.DCM
+*.nii
+*.nii.gz
+*.nrrd
+*.mha
+# Cached downsampled mammograms and heatmaps live under data/ or results/;
+# block stray image dumps elsewhere too. Re-include docs/paper figures.
+*.png
+*.jpg
+*.jpeg
+*.tif
+*.tiff
+!docs/**/*.png
+!docs/**/*.jpg
+!paper/figures/**
+!app/static/**
+
+# ---------------------------------------------------------------------
+# Genomic data
+# ---------------------------------------------------------------------
+*.vcf
+*.vcf.gz
+*.vcf.gz.tbi
+*.vcf.gz.csi
+*.bcf
+*.bcf.csi
 *.bed
 *.bim
 *.fam
-*.vcf
-*.vcf.gz
-*.bcf
+*.pgen
+*.pvar
+*.psam
+*.pvar.zst
+*.sscore
+*.eigenvec
+*.eigenval
+*.gen
+*.bgen
+*.sample
 
-# -----------------------------
-# Large datasets
-# -----------------------------
-data/genotypes/
-data/raw/
+# ---------------------------------------------------------------------
+# Model weights and checkpoints
+# ---------------------------------------------------------------------
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+*.h5
+*.pkl
+*.joblib
+models/**
+!models/**/
+!models/**/.gitkeep
+!models/**/README.md
 
-# -----------------------------
-# PRSice output
-# -----------------------------
+# ---------------------------------------------------------------------
+# Results, logs, experiment tracking
+# ---------------------------------------------------------------------
 results/
+/outputs/
+runs/
+logs/
+wandb/
+lightning_logs/
+mlruns/
+*.log
 
-# -----------------------------
-# Downloaded software
-# -----------------------------
+# ---------------------------------------------------------------------
+# Secrets and credentials
+# ---------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets/
+credentials*.json
+.netrc
+.aws/
+kaggle.json
+
+# ---------------------------------------------------------------------
+# Downloaded tools / binaries (PLINK, bcftools, PRSice, ...)
+# ---------------------------------------------------------------------
 tools/
 lib/
+*.exe
 
-# -----------------------------
-# OS files
-# -----------------------------
+# ---------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# ---------------------------------------------------------------------
+# R
+# ---------------------------------------------------------------------
+.RData
+.Rhistory
+.Rproj.user/
+
+# ---------------------------------------------------------------------
+# Flask / app runtime
+# ---------------------------------------------------------------------
+instance/
+uploads/
+app/uploads/
+app/reports/
+*.sqlite
+*.db
+
+# ---------------------------------------------------------------------
+# Editors / OS
+# ---------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
 Thumbs.db
 .DS_Store
+desktop.ini
