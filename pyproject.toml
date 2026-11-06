@@ -1,0 +1,13 @@
+[project]
+name = "mammorisk-plus"
+version = "0.1.0"
+description = "MammoRisk+: breast cancer risk tools validated for Pakistani / South Asian women"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+markers = [
+    "needs_torch: test requires PyTorch (imaging env)",
+    "needs_plink2: test requires the plink2 binary on PATH",
+]
