@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · {{ super() }}{% endblock %}
+{% block content %}
+<h1>{{ title }}</h1>
+<form method="post" enctype="multipart/form-data" class="form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% for name, text in fields %}
+    <label for="f-{{ name }}">{{ text }}</label>
+    <input id="f-{{ name }}" name="{{ name }}" type="file" accept="{{ accept }}">
+  {% endfor %}
+  <p class="hint">Files are processed in a temporary folder and deleted immediately afterwards.</p>
+  <button type="submit">Analyse</button>
+</form>
+{% if results %}
+  <h2>Results</h2>
+  {% for r in results %}
+    <article class="result">
+      <h3>{{ r.title }}</h3>
+      {% if r.available %}
+        <dl>{% for k, v in r.values.items() %}<dt>{{ k }}</dt><dd>{{ v }}</dd>{% endfor %}</dl>
+        {% if r.image_data_uri %}<img src="{{ r.image_data_uri }}" alt="Explanation heatmap for {{ r.title }}">{% endif %}
+      {% else %}
+        <p class="unavailable" role="status">{{ r.message }}</p>
+      {% endif %}
+      {% with label = r.label %}{% include "_label.html" %}{% endwith %}
+    </article>
+  {% endfor %}
+  <p><a class="button" href="{{ url_for('main.report') }}">Download PDF report</a></p>
+{% endif %}
+{% endblock %}

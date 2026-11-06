@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ config.APP_TITLE }}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site">
+    <a class="brand" href="{{ url_for('main.index') }}">MammoRisk+</a>
+    <nav aria-label="Main">
+      <a href="{{ url_for('main.about') }}">About &amp; validation</a>
+      {% if session.user %}
+        <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+        <form method="post" action="{{ url_for('main.logout') }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="link">Log out ({{ session.user }})</button>
+        </form>
+      {% else %}
+        <a href="{{ url_for('main.login') }}">Hospital login</a>
+      {% endif %}
+    </nav>
+  </header>
+  <p class="banner" role="note">Research prototype: not for clinical or diagnostic use.</p>
+  <main id="main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}<p class="flash {{ cat }}" role="alert">{{ msg }}</p>{% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site">MammoRisk+ · NUST SINES Final Year Project · every result states the populations it was validated on.</footer>
+</body>
+</html>

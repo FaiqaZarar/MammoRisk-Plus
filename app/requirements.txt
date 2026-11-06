@@ -1,0 +1,6 @@
+# Platform (O5) container dependencies. Model back-ends (torch for Module 3, plink2 for Module 2,
+# the Mirai OncoServe container for Module 1) are added when they are wired in.
+flask>=3.0,<4
+pyyaml>=6.0
+fpdf2>=2.7
+gunicorn>=22.0

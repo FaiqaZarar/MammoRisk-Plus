@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · {{ super() }}{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+{% set links = {"m3": "main.mammogram", "m1": "main.mirai", "m2": "main.prs"} %}
+<table>
+  <caption>Model back-ends on this server</caption>
+  <thead><tr><th scope="col">Module</th><th scope="col">Status</th><th scope="col">Open</th></tr></thead>
+  <tbody>
+  {% for key, adapter in adapters.items() %}
+    {% set ok = status[key][0] %}{% set reason = status[key][1] %}
+    <tr><td>{{ adapter.name }}</td>
+        <td>{% if ok %}Available{% else %}Not available: {{ reason }}{% endif %}</td>
+        <td><a href="{{ url_for(links[key]) }}">Upload</a></td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

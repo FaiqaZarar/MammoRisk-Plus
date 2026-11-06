@@ -1,0 +1,24 @@
+# MammoRisk+ platform. Secrets go in a local .env file (gitignored), e.g.
+#   MAMMORISK_SECRET_KEY=<python -c "import secrets; print(secrets.token_hex(32))">
+#   MAMMORISK_USERS=doctor1:<werkzeug hash>
+# Then: docker compose up --build  ->  http://localhost:8000
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      MAMMORISK_SECRET_KEY: ${MAMMORISK_SECRET_KEY:?set MAMMORISK_SECRET_KEY in .env}
+      MAMMORISK_USERS: ${MAMMORISK_USERS:?set MAMMORISK_USERS in .env}
+    volumes:
+      # Model artefacts and Module 2 reference stats are mounted read-only from the host.
+      - ./models:/srv/mammorisk/models:ro
+      - ./results/m2_prs:/srv/mammorisk/results/m2_prs:ro
+      - ./data/prs:/srv/mammorisk/data/prs:ro
+    tmpfs:
+      - /tmp   # uploads live in memory and vanish with the container
+    restart: unless-stopped
+
+  # Module 1 inference (enable when Mirai is wired in; set paths.m1_oncoserve_url: http://mirai:5000)
+  # mirai:
+  #   image: learn2cure/oncoserve_mirai:0.5.0

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}About &amp; validation · {{ super() }}{% endblock %}
+{% block content %}
+<h1>About &amp; validation status</h1>
+<p>Three independent modules. Imaging and genetic results are <strong>not combined</strong>: no public dataset has
+mammograms and genomes from the same women.</p>
+<h2>Validation of each output</h2>
+{% for label in labels %}{% include "_label.html" %}{% endfor %}
+<p class="disclaimer">{{ disclaimer }}</p>
+{% endblock %}

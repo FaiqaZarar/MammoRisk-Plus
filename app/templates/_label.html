@@ -1,0 +1,11 @@
+<section class="label status-{{ label.status }}" aria-label="Validation label: {{ label.output }}">
+  <h3>{{ label.output }} <span class="badge">{{ label.status_text }}</span></h3>
+  <dl>
+    <dt>Module</dt><dd>{{ label.module }}</dd>
+    <dt>Performance</dt><dd>{{ label.performance_text }}</dd>
+    <dt>Validated on</dt><dd>{{ label.datasets | join(", ") }}</dd>
+    <dt>Populations</dt><dd>{{ label.populations | join(", ") }}</dd>
+    <dt>Not validated on</dt><dd>{{ label.not_validated_on | join(", ") }}</dd>
+    {% if label.source %}<dt>Source</dt><dd>{{ label.source }}</dd>{% endif %}
+  </dl>
+</section>

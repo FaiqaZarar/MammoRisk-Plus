@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Hospital login · {{ super() }}{% endblock %}
+{% block content %}
+<h1>Hospital login</h1>
+<p>Diagnostic features are available to authorised hospital users only.</p>
+<form method="post" class="form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label for="username">Username</label>
+  <input id="username" name="username" autocomplete="username" required>
+  <label for="password">Password</label>
+  <input id="password" name="password" type="password" autocomplete="current-password" required>
+  <button type="submit">Log in</button>
+</form>
+{% endblock %}

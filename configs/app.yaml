@@ -1,0 +1,28 @@
+# MammoRisk+ platform (O5) configuration.
+# Secrets (SECRET_KEY, user password hashes) are NEVER stored here. They come from environment
+# variables:
+#   MAMMORISK_SECRET_KEY   Flask session signing key (required in production)
+#   MAMMORISK_USERS        comma-separated "username:werkzeug_password_hash" pairs
+# Create a hash with:
+#   python -c "from werkzeug.security import generate_password_hash as g; print(g('your-password'))"
+
+app:
+  title: "MammoRisk+"
+  max_upload_mb: 200            # 4 DICOM views can be large; VCFs for one person are small
+  session_lifetime_minutes: 30
+  # Uploads go to a temporary directory OUTSIDE the repo and are deleted after each request.
+  # null = the system temp dir.
+  upload_tmp_dir: null
+
+paths:
+  validation_labels: app/validation_labels.yaml
+  # Model artefacts live outside git (models/ is gitignored). Adapters report "model not
+  # available" until these exist.
+  m3_checkpoint: models/module3/best.pt
+  m1_oncoserve_url: null        # e.g. http://mirai:5000 when the OncoServe container runs
+  m2_weights: data/prs/PGS000004.txt.gz
+  m2_reference_stats: results/m2_prs/reference_stats.json   # CEU + Pakistani mean/SD from Module 2
+
+allowed_extensions:
+  mammogram: [".png", ".jpg", ".jpeg", ".dcm", ".dicom"]
+  vcf: [".vcf", ".vcf.gz"]
