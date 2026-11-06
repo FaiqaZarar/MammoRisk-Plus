@@ -1,335 +1,193 @@
 # MammoRisk+
 
-## Development and Validation of a Clinical Platform for Breast Cancer Risk Assessment and AI-Based Detection Using Deep Learning Mammography Analysis and Polygenic Risk Scoring
+### Development and Validation of a Clinical Platform for Breast Cancer Risk Assessment and AI-Based Detection Using Deep Learning Mammography Analysis and Polygenic Risk Scoring
 
 ![Status](https://img.shields.io/badge/status-in%20development-yellow)
-![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+![Python](https://img.shields.io/badge/python-3.11-blue)
 ![License](https://img.shields.io/badge/license-academic--research-lightgrey)
 
----
-
-## Table of Contents
-
-1. [Project Overview](#project-overview)
-2. [System Architecture](#system-architecture)
-3. [Modules](#modules)
-4. [Repository Structure](#repository-structure)
-5. [Datasets](#datasets)
-6. [Team](#team)
-7. [Module Progress](#module-progress)
-8. [Tech Stack](#tech-stack)
-9. [Getting Started](#getting-started)
-10. [Roadmap](#roadmap)
-11. [References](#references)
-12. [License](#license)
+BS Bioinformatics Final Year Project · NUST SINES · 2026–2027
+**Not intended for clinical or diagnostic use.**
 
 ---
 
-## Project Overview
+## Research question
 
-Breast cancer is the most frequently diagnosed malignancy among women worldwide, with 2.3 million new cases annually. Early and accurate risk assessment and detection are the most effective levers for reducing mortality.
+Breast cancer risk tools built on Western and European women are used **without evidence that they
+classify Pakistani / South Asian women correctly**. MammoRisk+ measures how far these tools can be
+trusted and delivers them through a platform that **states its own reliability**: every result is
+labelled with the datasets and populations it was validated on.
 
-**MammoRisk+** is a Final Year Project (BS Bioinformatics, NUST SINES, 2026) that delivers three independent, validated clinical modules for breast cancer risk assessment and AI-based detection.
+## Three independent modules
 
-The three modules operate completely independently — there is no fusion of outputs in the current scope. Each module addresses a distinct clinical question:
+The modules are **not fused**. No public dataset has mammograms and genomes from the same women, so
+fusion is future work (DECISIONS D-02).
 
-| Module | Clinical Question | Method |
-|--------|------------------|--------|
-| Module 1 — Mammography Risk Prediction | Will this patient develop breast cancer in the next 1 to 5 years? | Mirai deep learning model on DICOM mammograms |
-| Module 2 — Genomic Risk Scoring | What is this patient's inherited genetic predisposition to breast cancer? | PRS-313 polygenic risk score from VCF genomic data |
-| Module 3 — AI-Based Clinical Detection | Does this mammogram show a suspicious finding right now? | EfficientNet CNN trained on CBIS-DDSM with Grad-CAM XAI |
+| Module | What | Objective |
+|---|---|---|
+| **Module 1: Mirai** | Pre-trained Mirai, 1–5 yr risk from 4-view mammograms, **external validation on EMBED** | O4 |
+| **Module 2: PRS-313** | How risk category changes with the reference population across 9 Pakistani groups | **O1 (core)** |
+| **Module 3: Classifier + explanations** | Benign vs malignant classifier, transfer to Asian data, explanation reliability across datasets | O2 + O3 |
+| **Platform** | Flask + Docker web app: imaging + genetic risk with validation labels, PDF report | O5 |
 
-> **Note on scope:** Multimodal fusion of Module 1 and Module 2 outputs is technically motivated by the literature but is not in the current project scope due to the absence of publicly available paired mammography-genomic datasets. Fusion is proposed as future work.
+### Objectives
+- **O1 (core):** Quantify how PRS-313 risk categories change when standardised against a **European
+  (CEU) vs Pakistani** reference, across 9 Pakistani groups (1000G PJL + 8 HGDP groups). Output: %
+  reclassified with bootstrap 95% CIs, plus the SNPs driving the shift.
+- **O2:** Train a benign vs malignant classifier on CBIS-DDSM, then test transfer to East and South
+  Asian data (CMMD, DMID).
+- **O3:** Test whether explanations localise lesions equally well across CBIS-DDSM, VinDr-Mammo and
+  DMID (Pointing Game, energy-in-box, IoU, sanity check).
+- **O4:** Validate pre-trained Mirai on EMBED, broken down by breast density, race (Asian subgroup) and
+  vendor. Output: C-index + 1–5 yr time-dependent AUC with 95% CI, plus calibration.
+- **O5:** An open platform that shows imaging and genetic risk with validation labels, plus papers.
 
----
-
-## System Architecture
-
-```
-MODULE 1                    MODULE 2                    MODULE 3
-─────────────────           ─────────────────           ─────────────────
-Input: DICOM                Input: VCF File             Input: DICOM
-Mammogram                   (Genomic SNP data)          Mammogram
-     |                           |                           |
-     v                           v                           v
-Mirai Deep                  PRS-313 Formula             EfficientNet-B3
-Learning Model              (PGS Catalog                CNN Classifier
-(Pre-trained,               PGS000004)                  (Trained on
-MIT licence)                PRSice-2 +                  CBIS-DDSM)
-     |                      PLINK 2.0                        |
-     v                           |                           v
-1-5 Year Risk               Genomic Risk            Suspicious / Normal
-Probability                 Score +                 Classification
-+                           Population              +
-Grad-CAM                    Percentile              Grad-CAM Heatmap
-Heatmap                          |                  (Gradient-weighted
-     |                           |                  Class Activation
-     v                           v                  Mapping)
-PDF Report                  PDF Report                  PDF Report
-```
+> Objective numbering follows the synopsis defence deck. The revised literature review numbers O2–O4
+> slightly differently. This is still open, see [DECISIONS D-11](docs/DECISIONS.md).
 
 ---
 
-## Modules
+## Module details
 
-### Module 1 — Mammography Risk Prediction
+### Module 1: Mirai (O4)
+- **No retraining.** Pre-trained Mirai (Yala et al.) is validated externally on the **EMBED open 20%
+  subset**. There is no train/test split and no performance target: we measure, by subgroup (D-07).
+- Input: the four 2D FFDM views of one exam (L-CC, L-MLO, R-CC, R-MLO). 3D/synthetic views are
+  excluded. Mirai's aggregator combines **the four views of a single exam**. It does not pool prior
+  exams (D-08).
+- Outcomes: each screening exam is linked to later pathology-confirmed cancer. Women without cancer are
+  censored at their last follow-up.
+- Metrics: IPCW C-index, 1–5 yr time-dependent AUC with 95% CI, and calibration, broken down by
+  density, race and vendor (Mirai was trained on Hologic). If EMBED has few events, results are
+  exploratory.
+- Inference runs through OncoServe Docker (`learn2cure/oncoserve_mirai:0.5.0`). Grad-CAM loads the Mirai
+  repo + weights directly in PyTorch.
+- The Gail / Tyrer-Cuzick comparison is dropped, because we lack the questionnaire inputs (D-08).
 
-- **Model:** Mirai (Yala et al., MIT/MGH, 2021) — pre-trained, MIT licence
-- **Input:** DICOM mammogram — all 4 standard views (L-CC, L-MLO, R-CC, R-MLO)
-- **Output:** Calibrated 1-year to 5-year breast cancer risk probability
-- **XAI:** Grad-CAM heatmap highlighting regions driving the prediction
-- **Dataset:** RSNA 2022 (training/validation), EMBED (temporal validation)
-- **Target:** C-index 0.75 to 0.84 on RSNA 2022 test set
+### Module 2: PRS-313 (O1, core contribution)
+- Weights: PGS Catalog **PGS000004** (313 SNPs, Mavaddat et al. 2019). No training.
+- Tools: **PLINK 2.0 (`--score`) + bcftools** (D-10). PRSice-2 is not used: it is for deriving or
+  tuning PRS, and we apply published weights.
+- Strand flips and ambiguous A/T and C/G SNPs are handled. Coverage (n of 313) is always reported.
+  Missing SNPs are filled with the reference allele frequency.
+- Standardisation: z = (score − ref mean) / ref SD under a **European (CEU) vs Pakistani** reference.
+  The Pakistani reference is PJL + 8 HGDP groups pooled (~280). Per-group results are a sensitivity
+  analysis (D-09).
+- Ancestry check: PCA against the reference panel.
+- Output: per-group distributions, % changing risk category, stratified bootstrap 95% CI (1,000
+  resamples) and driver SNPs. Top-1% cut-offs come from the reference's fitted normal distribution and
+  are reported for the pooled sample only.
+- **We do not claim** which label is clinically correct, and we make no absolute-risk claims: there
+  are no outcomes.
 
-### Module 2 — Genomic Risk Scoring
+### Module 3: Classifier + explanations (O2, O3)
+- Task: **benign vs malignant**, because CBIS-DDSM has no normal images (D-11). The model uses **full
+  mammograms** resized to ~1024×512, not ROI crops. An image is malignant if any lesion on it is.
+- Split: 70/10/20 **patient-level** (mass + calc subsets merged by patient), saved in `splits/`.
+- Backbones: ResNet-50 baseline vs EfficientNet-B3, **ImageNet-pretrained and fine-tuned**, compared with
+  the DeLong test on the same test set.
+- Training: weighted cross-entropy, augmentation on train only, early stopping on val AUC.
+- Metrics: AUC with 95% CI, sensitivity, specificity, F1, PPV. **Target AUC ≥ 0.80.** The threshold is
+  set on validation (Youden) and applied once to test.
+- External test: AUC on CMMD and DMID, reporting the drop. Machine type and population are confounded.
+- Explanations: Grad-CAM + Score-CAM, scored against lesion masks/boxes on CBIS-DDSM, VinDr-Mammo and
+  DMID with the **Pointing Game, energy-in-box, IoU (top-50% threshold) and a weight-randomisation
+  sanity check**.
 
-- **Model:** PRS-313 formula (Mavaddat et al., 2019) — no training required
-- **Input:** VCF file (patient genotype data)
-- **Output:** Polygenic risk score + population percentile + risk category
-- **Formula:** PRS = Σ (βi × Gi) for i = 1 to 313
-- **Tools:** PLINK 2.0, PRSice-2
-- **Dataset:** PGS Catalog PGS000004 (formula), 1000 Genomes PJL (validation)
-
-### Module 3 — AI-Based Clinical Detection + XAI
-
-- **Model:** EfficientNet-B3 or ResNet-50 CNN (trained from scratch)
-- **Input:** DICOM mammogram
-- **Output:** Suspicious / Normal classification + Grad-CAM heatmap
-- **Dataset:** CBIS-DDSM (10,239 pathology-verified mammograms)
-- **Split:** 70% train / 10% validation / 20% test at patient level
-- **Target:** AUC above 0.85 on held-out CBIS-DDSM test set
+### Platform (O5)
+Flask + Docker. Upload a mammogram to get the M3 probability + heatmap (and M1 risk when 4 views are
+given). Upload a VCF to get the M2 score under both references. **Every output carries a validation
+label** (datasets, populations, metric) that is printed in the PDF report. Diagnostic features sit
+behind a hospital login.
 
 ---
 
-## Repository Structure
+## Datasets (public only)
+
+| Dataset | Population | Use | Key limitation |
+|---|---|---|---|
+| CBIS-DDSM | USA, scanned film | Train/val/test classifier (M3) | No normals, so benign vs malignant only |
+| CMMD | China | External test (M3, O2) | Different machines/population |
+| DMID | India | External test + explanations (M3) | Labels from reports, not biopsy |
+| VinDr-Mammo | Vietnam | Explanations only (lesion boxes) | No biopsy labels. PhysioNet licence |
+| EMBED (open 20%) | USA, diverse | Mirai validation (M1) | Few future cancers / Asian patients, so exploratory |
+| 1000 Genomes | PJL (96) + CEU | PRS (M2) | No cancer outcomes |
+| HGDP | 8 Pakistani groups | PRS (M2) | Small groups, so per-group results are descriptive |
+
+RSNA 2022 is **not** used, because it has no follow-up times and so no C-index (D-07). See
+[data/README.md](data/README.md) for access. No data, images, genomes or weights are committed.
+
+---
+
+## Repository structure
 
 ```
 MammoRisk-Plus/
-│
-├── src/
-│   ├── imaging/            # Module 1 — Mirai inference + Grad-CAM
-│   ├── genomics/           # Module 2 — PRS-313 pipeline
-│   ├── evaluation/         # Metrics: AUC, C-index, DeLong's test
-│   ├── preprocessing/      # DICOM to PNG, metadata CSV generation
-│   ├── api/                # Flask backend — endpoints for all 3 modules
-│   └── fusion/             # Future work — multimodal fusion
-│
-├── data/
-│   ├── raw/                # Raw datasets (gitignored)
-│   │   ├── cbis_ddsm/
-│   │   ├── rsna_2022/
-│   │   ├── embed/
-│   │   └── vindr_mammo/
-│   ├── genomics/           # VCF files + PRS outputs (gitignored)
-│   └── processed/          # Mirai-compatible metadata CSVs
-│
-├── models/                 # Trained models + snapshots (gitignored)
-│   ├── mirai/
-│   └── module3/
-│
-├── frontend/               # Web UI
-│   ├── templates/
-│   └── static/
-│
-├── genomics/               # Module 2 scripts (Pukhraj)
-│   ├── scripts/
-│   ├── docs/
-│   └── examples/
-│
-├── notebooks/              # Exploratory analysis
-├── tests/                  # Unit and integration tests
-├── configs/                # Model and pipeline configuration files
-├── docs/
-│   └── weekly_reports/     # Supervisor logbook entries
-├── paper/
-│   ├── draft/
-│   └── figures/
-│
-├── README.md
-└── .gitignore
+├── CLAUDE.md  CHANGELOG.md  README.md  .gitignore
+├── environment-imaging.yml    # Windows + CUDA: M1, M3, evaluation, app
+├── environment-genomics.yml   # macOS: M2 (plink2, bcftools)
+├── docs/            # STATUS.md, DECISIONS.md (PDFs kept locally, not committed)
+├── configs/         # one YAML per experiment
+├── data/            # gitignored; data/README.md = how to get each dataset
+├── splits/          # patient-level split CSVs
+├── module1_mirai/
+├── module2_prs/     # legacy_prsice/ = frozen chr1 PRSice-2 pilot, pending review
+├── module3_classifier/
+├── evaluation/      # AUC+CI, DeLong, C-index/IPCW, td-AUC, calibration, bootstrap, XAI scores
+├── app/             # Flask app, templates, static, PDF report, Dockerfile
+├── models/          # local weights only (gitignored)
+├── notebooks/  tests/  scripts/  paper/
+└── results/         # gitignored
 ```
 
----
-
-## Datasets
-
-| Dataset | Module | Purpose | Size | Access |
-|---------|--------|---------|------|--------|
-| RSNA 2022 | Module 1 | Training and risk prediction validation | ~100 GB | AWS Open Data, free |
-| EMBED (Emory) | Module 1 | Temporal validation (longitudinal, 5yr follow-up) | ~300 GB | AWS Open Data, free |
-| CBIS-DDSM | Module 3 | CNN training and detection validation | ~6 GB | TCIA, free |
-| VinDr-Mammo | Module 3 | Asian generalisation test | ~200 GB | PhysioNet, free |
-| 1000 Genomes PJL | Module 2 | PRS pipeline validation | ~5 GB | internationalgenome.org, free |
-| PGS Catalog PGS000004 | Module 2 | PRS-313 formula (313 SNPs + effect sizes) | <1 MB | pgscatalog.org, free |
-
-> All datasets are publicly available for non-commercial research use. No ethics board approval required.
-
----
-
-## Team
-
-| Member | Role | Responsibilities |
-|--------|------|-----------------|
-| **Faiqa Zarar Noor (471543)** | ML Lead + Group Coordinator | Module 1 (Mirai), Module 3 (CNN + Grad-CAM), Flask backend, system integration |
-| **Pukhraj Tahir (467407)** | Genomics Lead | Module 2 (PRS-313 pipeline), VCF processing, 1000 Genomes analysis |
-| **Manaal Tufail (462781)** | Evaluation Lead | Dataset preparation, evaluation pipeline, paper writing |
-
-**Supervisor:** Dr. Mehwish Noureen — Assistant Professor, NUST SINES  
-**Co-Supervisor:** Dr. Mian Ilyas Ahmad — Professor, NUST SINES
-
----
-
-## Module Progress
-
-### Module 1 — Mammography Risk Prediction
-
-**Status:** 🚧 In Progress
-
-- [ ] Docker Desktop installed
-- [ ] Mirai container pulled (`docker pull learn2cure/oncoserve_mirai:0.5.0`)
-- [ ] RSNA 2022 dataset downloaded
-- [ ] DICOM to PNG preprocessing pipeline built
-- [ ] Mirai-compatible metadata CSV generated
-- [ ] First Mirai inference on test mammogram
-- [ ] Grad-CAM heatmap implementation
-- [ ] Validation on RSNA 2022 (target C-index 0.75 to 0.84)
-- [ ] Temporal validation on EMBED
-
----
-
-### Module 2 — Genomic Risk Scoring
-
-**Status:** ✅ Pipeline functional — chromosome 1 pilot complete
-
-- [x] PRS-313 downloaded from PGS Catalog (PGS000004)
-- [x] PLINK 2.0 installed
-- [x] PRSice-2 installed
-- [x] Chromosome 1 genotype data downloaded from 1000 Genomes Project
-- [x] PRS variants matched to genotype data
-- [x] PRSice base file generated
-- [x] Initial PRS scores calculated (chromosome 1 pilot)
-- [ ] Extend to genome-wide scoring (all chromosomes)
-- [ ] Validate score distributions against published PRS-313 benchmarks
-- [ ] Build VCF upload Flask endpoint
-
-**Key scripts** (`genomics/scripts/`):
-
-| Script | Purpose |
-|--------|---------|
-| `extract_chr1_prs.py` | Extracts chromosome 1 variants relevant to PRS-313 |
-| `match_prs_to_bim.py` | Aligns PRS variants to genotype `.bim` files |
-| `prepare_prsice_base.py` | Builds the PRSice-2 base (summary statistics) file |
-| `run_prsice.bat` | Runs the PRSice-2 scoring pipeline |
-
----
-
-### Module 3 — AI-Based Clinical Detection + XAI
-
-**Status:** ⏳ Not started
-
-- [ ] Download CBIS-DDSM from TCIA (cancerimagingarchive.net)
-- [ ] DICOM to PNG preprocessing
-- [ ] Build 70/10/20 train/validation/test split at patient level
-- [ ] Train EfficientNet-B3 CNN on benign/malignant labels
-- [ ] Implement Grad-CAM heatmap generation (captum library)
-- [ ] Evaluate on held-out test set (target AUC above 0.85)
-- [ ] Verify Grad-CAM regions against CBIS-DDSM ROI segmentation masks
-
----
-
-### Web Platform
-
-**Status:** ⏳ Not started
-
-- [ ] Flask backend skeleton with three module endpoints
-- [ ] DICOM upload interface
-- [ ] VCF upload interface
-- [ ] Risk score display + heatmap visualisation
-- [ ] Downloadable PDF report generation
-
----
-
-## Tech Stack
-
-| Category | Tools |
-|----------|-------|
-| Language | Python 3.11 |
-| Deep Learning | PyTorch 2.x, torchvision |
-| Image Processing | OpenCV, pydicom, albumentations |
-| Genomics | PLINK 2.0, PRSice-2, bcftools |
-| Explainability | captum (Grad-CAM), OpenCV |
-| Evaluation | scikit-learn, lifelines (AUC, C-index, DeLong's test) |
-| Web Backend | Flask |
-| Frontend | HTML, CSS, JavaScript |
-| Containerisation | Docker |
-| Experiment Tracking | Weights and Biases |
-| Version Control | Git, GitHub |
-| Compute | Google Colab Pro / NUST GPU cluster |
-
----
-
-## Getting Started
-
-> The project is under active development. Setup instructions expand as each module stabilises.
+## Getting started
 
 ```bash
-# Clone the repository
 git clone https://github.com/FaiqaZarar/MammoRisk-Plus.git
 cd MammoRisk-Plus
 
-# Install Python dependencies
-pip install torch torchvision pandas numpy scikit-learn matplotlib \
-            opencv-python flask pydicom shap captum lifelines wandb
+# Imaging / platform (Windows + CUDA)
+conda env create -f environment-imaging.yml
+conda activate mammorisk-imaging
 
-# Pull the Mirai Docker container (Module 1)
+# Genomics (macOS; on Windows use the standalone plink2 binary, see data/README.md)
+conda env create -f environment-genomics.yml
+conda activate mammorisk-genomics
+
+# Mirai inference container (Module 1)
 docker pull learn2cure/oncoserve_mirai:0.5.0
-
-# Genomics pipeline setup — see genomics/docs/ for
-# PLINK 2.0 and PRSice-2 installation instructions
 ```
 
----
+## Status
 
-## Roadmap
+See [docs/STATUS.md](docs/STATUS.md) for per-module progress and results, and
+[docs/DECISIONS.md](docs/DECISIONS.md) for every design decision. In short: data access is under way,
+and the new PLINK 2.0 PRS-313 pipeline (M2) is next. A chromosome 1 PRSice-2 pilot exists in
+`module2_prs/legacy_prsice/` for reference.
 
-- [x] Repository setup and folder structure
-- [x] PRS-313 computation pipeline — chromosome 1 pilot (Module 2)
-- [ ] Genome-wide PRS scoring (Module 2)
-- [ ] Mirai inference pipeline (Module 1)
-- [ ] Grad-CAM explainability — Module 1
-- [ ] CBIS-DDSM CNN training (Module 3)
-- [ ] Grad-CAM explainability — Module 3
-- [ ] Flask web platform with three module endpoints
-- [ ] Validation — RSNA 2022 (Module 1), CBIS-DDSM (Module 3)
-- [ ] Temporal validation — EMBED (Module 1)
-- [ ] Downloadable PDF clinical risk report
-- [ ] Paper submission — npj Breast Cancer / Cancers MDPI
+**Timeline:** M2 Oct–Nov 2026 · M1 Nov–Dec 2026 · M3 Nov 2026–Jan 2027 · **app release end of January
+2027** · papers + thesis Feb–May 2027.
 
-**Future Work:**
-- Multimodal fusion of Module 1 and Module 2 (requires paired mammography-genomic dataset)
-- Molecular subtype classification extension of Module 3
-- Population-specific PRS recalibration for South Asian genomes
+## Team
 
----
+| Member | Responsibilities |
+|---|---|
+| **Faiqa Zarar Noor** (team lead) | Module 1 (Mirai), Module 3 (classifier + XAI), coordination |
+| **Pukhraj Tahir** | Module 2 (PRS-313, O1) |
+| **Manaal Tufail** | Evaluation, platform (Flask + Docker), literature; supports Module 3 |
 
-## References
+**Supervisor:** Dr. Mehwish Noureen · **Co-supervisor:** Dr. Mian Ilyas Ahmad · NUST SINES
 
-- Yala et al., "Multi-Institutional Validation of a Mammography-Based Breast Cancer Risk Model," JCO, 2022
-- Mavaddat et al., "Polygenic Risk Scores for Prediction of Breast Cancer," AJHG, 2019
-- Padrik et al., "Guidance for the Clinical Use of Breast Cancer Polygenic Risk Scores," Cancers, 2025
-- Selvaraju et al., "Grad-CAM: Visual Explanations from Deep Networks," IJCV, 2020
-- PGS Catalog: pgscatalog.org/score/PGS000004
-- 1000 Genomes Project: internationalgenome.org
-- CBIS-DDSM: cancerimagingarchive.net/collection/cbis-ddsm
-- RSNA 2022: registry.opendata.aws/rsna-screening-mammography-breast-cancer-detection
-- EMBED: registry.opendata.aws/emory-breast-imaging-dataset-embed
+## Future work
+- Fusion of imaging and genetic risk (needs a paired mammography + genotype dataset)
+- Validation on Pakistani hospital mammograms
+- Public Urdu awareness app
 
----
+## Key references
+- Yala et al., Mirai, *Sci Transl Med* 2021; multi-institutional validation, *JCO* 2022
+- Mavaddat et al., PRS-313, *AJHG* 2019 (PGS Catalog PGS000004)
+- Selvaraju et al., Grad-CAM, *IJCV* 2020; Wang et al., Score-CAM, *CVPR-W* 2020
+- Adebayo et al., Sanity Checks for Saliency Maps, *NeurIPS* 2018
 
 ## License
-
-This project is developed for academic and research purposes as part of a Final Year Project at NUST SINES. It is **not intended for clinical or diagnostic use**.
-
----
-
-**BS Bioinformatics · Final Year Project · NUST SINES · 2026–2027**
+Developed for academic research as a Final Year Project at NUST SINES. Not for clinical or diagnostic use.
