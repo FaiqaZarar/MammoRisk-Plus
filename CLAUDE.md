@@ -198,6 +198,7 @@ MammoRisk-Plus/
 - M1 cohort: `python -m module1_mirai.embed_cohort --config configs/m1_mirai_embed.yaml`
 - M1 evaluate: `python -m module1_mirai.evaluate --config configs/m1_mirai_embed.yaml`
 - M3 split: `python -m module3_classifier.splits --config configs/m3_effnetb3.yaml`
+- M3 cache (stream from TCIA): `python -m module3_classifier.fetch_cbis --config configs/m3_effnetb3.yaml --workers 8` (Kaggle: `notebooks/m3_cbis_cache_kaggle.ipynb`)
 - Train M3: `python -m module3_classifier.train --config configs/m3_effnetb3.yaml`
 - Evaluate M3: `python -m module3_classifier.evaluate run|compare ...` (see `--help`)
 - Explain M3: `python -m module3_classifier.explain --config ... --dataset cbis|vindr|dmid`

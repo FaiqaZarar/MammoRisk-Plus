@@ -221,6 +221,26 @@ Entries D-14 to D-17 were made by Faiqa (with Claude Code) so the work wasn't bl
   (2026-10-31, generic Linux build).
 - **Decided by:** Faiqa (with Claude Code), 2026-11-07. Pukhraj to review.
 
+### D-20 · 2026-11-09 · CBIS-DDSM streamed from the TCIA API into the PNG cache (no raw DICOM storage)
+- **Decision:** `module3_classifier/fetch_cbis.py` downloads one series at a time from the public TCIA
+  NBIA API, writes the 16-bit PNG + mask, and deletes the DICOM at once. It runs on Kaggle
+  (`notebooks/m3_cbis_cache_kaggle.ipynb`), and the cache becomes a **private** Kaggle dataset for training.
+- **Alternatives:** (a) NBIA Data Retriever → 163.6 GB on a USB drive → `preprocess.py` (D-17 plan),
+  which needs the full disk space and a separate deletion step; (b) the Kaggle JPEG mirror of CBIS-DDSM,
+  which is 8-bit lossy and a third-party re-encoding with unclear provenance.
+- **Reason:** peak disk is a few hundred MB instead of 164 GB. Data come straight from the source, at
+  full bit depth, with the same preprocessing code. The run is resumable and logs every image.
+- **Masks:** all ROI series of a lesion are fetched (TCIA PatientID = lesion folder), and the mask is the
+  file with the full-image shape and two values. This handles the ~107 series where TCIA labels the mask
+  series "cropped images".
+- **Split created 2026-11-09** from the official TCIA description CSVs (before any image was seen):
+  `splits/m3_cbis_split.csv`, 3,032 full mammograms / 1,566 patients, 44% malignant images. Train 1,095 /
+  val 157 / test 314 patients (2,138 / 291 / 603 images), seed 42.
+- **Checked:** a trial on 3 images gave 3/3 ok with masks, and a visual check showed correct orientation
+  and mask alignment. Home bandwidth gives ~3 img/min (~17 h for all), hence Kaggle.
+- **Supersedes** the CBIS part of D-17 (USB for raw CBIS). USB is still used for VinDr/CMMD.
+- **Decided by:** Faiqa (with Claude Code)
+
 ---
 
 ## Deviations from the FIRST (July) literature review

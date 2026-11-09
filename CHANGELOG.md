@@ -2,6 +2,13 @@
 
 Newest first. One entry per meaningful change: date · module · what changed · files touched.
 
+## 2026-11-09
+- **M3:** Created the patient-level split `splits/m3_cbis_split.csv` from the official TCIA CSVs (D-20).
+- **M3:** Added `module3_classifier/fetch_cbis.py` (streams CBIS-DDSM from the TCIA API into the PNG cache,
+  deleting DICOMs at once; resumable; robust mask lookup) and `tests/test_m3_fetch.py`.
+- **M3:** Added `notebooks/m3_cbis_cache_kaggle.ipynb` to build the cache on Kaggle.
+- **Docs:** D-20, M3 row in STATUS, CLAUDE.md command, data/README storage note.
+
 ## 2026-11-07
 - **M2:** Switched to GRCh38: added `data/prs/PGS000004_hmPOS_GRCh38.txt.gz` (harmonised, 313/313 mapped) and
   genotypes from the gnomAD v3.1.2 HGDP+1KG callset (D-19). New pipeline steps `samples`, `extract`,

@@ -33,6 +33,10 @@ the 313 positions with `bcftools view -R` (a few MB). The easiest place to run i
 `notebooks/m2_prs_colab.ipynb`. The sample metadata (3.4 MB) is downloaded by `--step samples`.
 
 ## Storage
+CBIS-DDSM is **streamed** from the TCIA API straight into the PNG cache, so raw DICOMs are never kept
+(`module3_classifier/fetch_cbis.py`, D-20). Build the cache on Kaggle. The rest of this section applies to
+VinDr-Mammo, CMMD and EMBED.
+
 CBIS-DDSM alone is ~164 GB as DICOM, and SINES only gives ~20 GB. Cache downsampled PNGs under
 `data/processed/` and delete raw DICOMs once they are cached. Warn the team before any large download.
 
