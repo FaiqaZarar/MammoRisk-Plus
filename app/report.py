@@ -38,6 +38,10 @@ def build_pdf(results: list[LabelledResult], user: str | None = None) -> bytes:
     pdf.ln(2)
     pdf.set_text_color(160, 0, 0)
     para(DISCLAIMER, 10, "B")
+    if any(getattr(r, "illustrative", False) for r in results):
+        pdf.set_text_color(180, 71, 10)
+        para("DEMO MODE: results marked ILLUSTRATIVE are sample output, NOT computed from any file "
+             "and NOT real data.", 10, "B")
     pdf.set_text_color(0, 0, 0)
     pdf.ln(3)
 
@@ -46,6 +50,10 @@ def build_pdf(results: list[LabelledResult], user: str | None = None) -> bytes:
     for r in results:
         if not isinstance(r, LabelledResult):
             raise MissingLabelError("refusing to print a result without a validation label")
+        if r.illustrative:
+            pdf.set_text_color(180, 71, 10)
+            para("ILLUSTRATIVE - NOT REAL DATA", 10, "B")
+            pdf.set_text_color(0, 0, 0)
         para(r.title, 12, "B")
         para(r.label.module, 9, "I")
         if r.available:

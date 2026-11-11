@@ -8,6 +8,7 @@ from flask import (Blueprint, Response, abort, current_app, flash, redirect, ren
                    request, session, url_for)
 from werkzeug.utils import secure_filename
 
+from app import project_status
 from app.labels import LabelledResult
 from app.report import DISCLAIMER, build_pdf
 from app.security import check_csrf, login_required, verify_user
@@ -26,12 +27,13 @@ def _csrf():
 # ----------------------------------------------------------------------------------------------
 @bp.get("/")
 def index():
-    return render_template("index.html", disclaimer=DISCLAIMER)
+    return render_template("index.html", labels=list(current_app.extensions["labels"].values()),
+                           disclaimer=DISCLAIMER)
 
 
 @bp.get("/about")
 def about():
-    return render_template("about.html", labels=current_app.extensions["labels"].values(),
+    return render_template("about.html", labels=list(current_app.extensions["labels"].values()),
                            disclaimer=DISCLAIMER)
 
 
@@ -65,7 +67,9 @@ def logout():
 def dashboard():
     adapters = current_app.extensions["adapters"]
     status = {k: a.availability() for k, a in adapters.items()}
-    return render_template("dashboard.html", status=status, adapters=adapters)
+    return render_template("dashboard.html", status=status, adapters=adapters,
+                           modules=project_status.load_modules(), plan=project_status.timeline(),
+                           recent=session.get("results") or [])
 
 
 def _allowed(filename: str, kind: str) -> bool:
@@ -102,7 +106,9 @@ def mammogram():
     results = None
     if request.method == "POST":
         results = _run("m3", {"image": "image"}, "mammogram")
-    return render_template("upload.html", title="Mammogram: benign vs malignant",
+    return render_template("upload.html", title="Mammogram: benign vs malignant", page="mammogram",
+                           intro="One mammogram in, a malignancy probability and an explanation heatmap out. "
+                                 "The classifier separates benign from malignant lesions; it was not trained on normal mammograms.",
                            fields=[("image", "Mammogram (PNG, JPG or DICOM)")],
                            accept=".png,.jpg,.jpeg,.dcm,.dicom", results=results)
 
@@ -113,8 +119,12 @@ def mirai():
     results = None
     if request.method == "POST":
         results = _run("m1", {v: v for v in REQUIRED_VIEWS}, "mammogram")
-    return render_template("upload.html", title="Mirai 1-5 year risk (four views)",
-                           fields=[(v, f"{v} view (DICOM)") for v in REQUIRED_VIEWS],
+    # Hanging-protocol order: right breast on the viewer's left, CC above MLO.
+    order = ("R-CC", "L-CC", "R-MLO", "L-MLO")
+    return render_template("upload.html", title="Mirai 1-5 year risk (four views)", page="mirai",
+                           intro="Mirai combines the four standard views of one exam into a 1 to 5 year risk. "
+                                 "It does not use earlier exams.",
+                           fields=[(v, f"{v} view (DICOM)") for v in order], grid="views",
                            accept=".dcm,.dicom,.png", results=results)
 
 
@@ -125,6 +135,9 @@ def prs():
     if request.method == "POST":
         results = _run("m2", {"vcf": "vcf"}, "vcf")
     return render_template("upload.html", title="PRS-313 under European (CEU) vs Pakistani reference",
+                           page="prs",
+                           intro="The same genotype scored against two reference populations. We show how the risk "
+                                 "category changes; we do not claim which category is clinically correct, or give absolute risk.",
                            fields=[("vcf", "Genotype file (VCF or VCF.gz)")],
                            accept=".vcf,.gz", results=results)
 
@@ -140,3 +153,24 @@ def report():
     pdf = build_pdf(results, user=session.get("user"))
     return Response(pdf, mimetype="application/pdf",
                     headers={"Content-Disposition": "attachment; filename=mammorisk_report.pdf"})
+
+
+# ----------------------------------------------------------------------------------------------
+# Error pages (same look as the rest of the site, and they say what to do next)
+# ----------------------------------------------------------------------------------------------
+_ERRORS = {
+    400: ("Request not accepted", "The form could not be verified. Reload the page and try again."),
+    404: ("Page not found", "Check the address, or go back to the start page."),
+    413: ("File too large", "The upload is bigger than this server accepts. Remove large files or send fewer views."),
+}
+
+
+@bp.app_errorhandler(400)
+@bp.app_errorhandler(404)
+@bp.app_errorhandler(413)
+def _error(err):
+    title, hint = _ERRORS[err.code]
+    detail = getattr(err, "description", "") or ""
+    if detail == title or detail.startswith("The "):  # werkzeug boilerplate adds nothing
+        detail = ""
+    return render_template("error.html", code=err.code, title=title, hint=hint, detail=detail), err.code

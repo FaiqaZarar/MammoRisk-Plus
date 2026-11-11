@@ -11,6 +11,9 @@ class ModelAdapter(ABC):
     #: validation-label keys this adapter produces, in display order
     label_keys: tuple[str, ...] = ()
     name: str = "model"
+    #: set by the app factory; when True and the model is missing, stamped ILLUSTRATIVE sample output
+    #: is returned instead of "model not available" (see app/services/demo.py)
+    demo_mode: bool = False
 
     def __init__(self, labels: dict[str, ValidationLabel], config: dict):
         self.labels = labels
@@ -27,6 +30,9 @@ class ModelAdapter(ABC):
     def predict(self, files: dict[str, Path]) -> list[LabelledResult]:
         ok, reason = self.availability()
         if not ok:
+            if self.demo_mode:
+                from app.services.demo import demo_results
+                return demo_results(self.labels, self.label_keys)
             return self.unavailable(reason)
         return self._predict(files)
 

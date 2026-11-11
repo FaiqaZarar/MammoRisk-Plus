@@ -1,10 +1,70 @@
 {% extends "base.html" %}
-{% block title %}About &amp; validation · {{ super() }}{% endblock %}
+{% from "_icons.html" import icon %}
+{% block title %}Evidence and validation · {{ super() }}{% endblock %}
 {% block content %}
-<h1>About &amp; validation status</h1>
-<p>Three independent modules. Imaging and genetic results are <strong>not combined</strong>: no public dataset has
-mammograms and genomes from the same women.</p>
-<h2>Validation of each output</h2>
-{% for label in labels %}{% include "_label.html" %}{% endfor %}
+<header class="page-head">
+  <span class="page-icon">{{ icon("evidence") }}</span>
+  <div>
+    <h1>Evidence and validation</h1>
+    <p class="muted">Three independent modules. Imaging and genetic results are <strong>not combined</strong>: no public
+      dataset has mammograms and genomes from the same women.</p>
+  </div>
+</header>
+
+<section aria-labelledby="where-h">
+  <h2 id="where-h" class="section-title">What has been tested, and where</h2>
+  <div class="card">
+    {% include "_matrix.html" %}
+    <p class="matrix-note">A region shows as validated only when the output&rsquo;s label records a real result and its source.
+      Dashed circles are datasets we have identified but not yet validated on.</p>
+  </div>
+</section>
+
+<section aria-labelledby="labels-h">
+  <h2 id="labels-h" class="section-title">Validation of each output</h2>
+  <div class="label-list">
+    {% for label in labels %}{% include "_label.html" %}{% endfor %}
+  </div>
+</section>
+
+<section aria-labelledby="data-h">
+  <h2 id="data-h" class="section-title">Datasets and their limits</h2>
+  <div class="table-wrap card">
+    <table class="data">
+      <thead><tr><th scope="col">Dataset</th><th scope="col">Population</th><th scope="col">Used for</th><th scope="col">Main limit</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">CBIS-DDSM</th><td>USA, scanned film</td><td>Train, validate and test the classifier</td><td>No normal images, so benign versus malignant only</td></tr>
+        <tr><th scope="row">CMMD</th><td>China</td><td>External test of the classifier</td><td>Different machines and population</td></tr>
+        <tr><th scope="row">DMID</th><td>India, 510 images</td><td>External test and explanations</td><td>Labels come from reports, not biopsy</td></tr>
+        <tr><th scope="row">VinDr-Mammo</th><td>Vietnam</td><td>Explanation scoring only</td><td>No biopsy labels; no Hologic machines. Images are never shown, only metrics</td></tr>
+        <tr><th scope="row">EMBED, open 20%</th><td>USA, diverse</td><td>Validating Mirai</td><td>Few future cancers and few Asian patients, so results are exploratory</td></tr>
+        <tr><th scope="row">1000 Genomes and HGDP</th><td>CEU, Pakistani (PJL and 8 HGDP groups)</td><td>PRS references</td><td>No cancer outcomes; HGDP groups have about 16 to 24 people</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section aria-labelledby="methods-h">
+  <h2 id="methods-h" class="section-title">How each module works</h2>
+  <div class="method-grid">
+    <article class="card method">
+      <h3>{{ icon("mammogram") }} Classifier</h3>
+      <p>Full mammograms, not cropped lesions, resized to about 1024 by 512. EfficientNet-B3 is compared with a ResNet-50 baseline
+        on a patient-level split. The decision threshold is chosen on validation data and applied once to the test set.
+        Heatmaps are scored against lesion outlines with the Pointing Game, energy-in-box and IoU, plus a weight-randomisation sanity check.</p>
+    </article>
+    <article class="card method">
+      <h3>{{ icon("mirai") }} Mirai</h3>
+      <p>The published Mirai model is used as it is, with no retraining. It reads the four views of one exam and gives a 1 to 5 year risk.
+        Validation reports a C-index and time-dependent AUC with confidence intervals, split by breast density, race and machine vendor.</p>
+    </article>
+    <article class="card method">
+      <h3>{{ icon("dna") }} PRS-313</h3>
+      <p>Published weights (PGS000004) are applied to the genotype. The score is standardised against a European (CEU) and a pooled Pakistani
+        reference, and we report how many people change risk category, with bootstrap intervals and the variants driving the shift.</p>
+    </article>
+  </div>
+</section>
+
 <p class="disclaimer">{{ disclaimer }}</p>
 {% endblock %}

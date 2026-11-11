@@ -19,6 +19,11 @@ STATUS_TEXT = {
 }
 
 
+#: Regions shown in the reliability matrix (code -> display name). Pakistan is deliberately a column:
+#: the platform's point is to show that no result has been validated there yet.
+REGIONS = {"US": "USA", "CN": "China", "IN": "India", "VN": "Vietnam", "EU": "Europe", "PK": "Pakistan"}
+
+
 class MissingLabelError(ValueError):
     """Raised when a result has no (or an unknown) validation label."""
 
@@ -36,10 +41,18 @@ class ValidationLabel:
     value: float | None = None
     ci: list[float] | None = None
     source: str | None = None
+    #: short display name for the matrix and nav (falls back to ``output``)
+    short: str = ""
+    #: region code -> "planned" (dataset identified, not yet validated) or "reference" (a reference
+    #: distribution only, no outcomes). Real validation state comes from ``status``, never from here.
+    regions: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self):
         if self.status not in STATUSES:
             raise ValueError(f"label {self.key}: unknown status {self.status!r}")
+        bad = set(self.regions) - set(REGIONS)
+        if bad:
+            raise ValueError(f"label {self.key}: unknown regions {sorted(bad)}")
         if self.status == "validated" and (self.value is None or not self.source):
             # A "validated" label without a number and a traceable source is not allowed.
             raise ValueError(f"label {self.key}: 'validated' needs value and source")
@@ -47,6 +60,20 @@ class ValidationLabel:
     @property
     def status_text(self) -> str:
         return STATUS_TEXT[self.status]
+
+    @property
+    def display_name(self) -> str:
+        return self.short or self.output
+
+    def region_state(self, code: str) -> str:
+        """none | planned | reference | exploratory | validated. A region only counts as validated
+        when the label itself is validated (value + source), so the matrix cannot overstate."""
+        declared = self.regions.get(code)
+        if declared is None:
+            return "none"
+        if declared == "reference":
+            return "reference"
+        return self.status if self.status in ("validated", "exploratory") else "planned"
 
     @property
     def performance_text(self) -> str:
@@ -85,6 +112,9 @@ class LabelledResult:
     values: dict[str, Any] = field(default_factory=dict)
     message: str = ""
     image_data_uri: str | None = None  # e.g. heatmap PNG as data: URI
+    #: True only for demo-mode sample output. It is stamped on the page and in the PDF so it can
+    #: never be mistaken for a real result.
+    illustrative: bool = False
 
     def __post_init__(self):
         if not isinstance(self.label, ValidationLabel):
@@ -104,7 +134,8 @@ class LabelledResult:
         if key not in labels:
             raise MissingLabelError(f"unknown label {key!r}")
         return cls(label=labels[key], title=d["title"], available=d["available"],
-                   values=d.get("values", {}), message=d.get("message", ""))
+                   values=d.get("values", {}), message=d.get("message", ""),
+                   illustrative=bool(d.get("illustrative", False)))
 
 
 def make_result(labels: dict[str, ValidationLabel], key: str, **kwargs) -> LabelledResult:

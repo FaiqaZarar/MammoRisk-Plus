@@ -1,18 +1,89 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}Dashboard · {{ super() }}{% endblock %}
 {% block content %}
-<h1>Dashboard</h1>
 {% set links = {"m3": "main.mammogram", "m1": "main.mirai", "m2": "main.prs"} %}
-<table>
-  <caption>Model back-ends on this server</caption>
-  <thead><tr><th scope="col">Module</th><th scope="col">Status</th><th scope="col">Open</th></tr></thead>
-  <tbody>
+{% set icons = {"m3": "mammogram", "m1": "mirai", "m2": "dna"} %}
+<header class="page-head">
+  <span class="page-icon">{{ icon("dashboard") }}</span>
+  <div>
+    <h1>Dashboard</h1>
+    <p class="muted">Signed in as {{ session.user }}. Check which models are running on this server, then open one.</p>
+  </div>
+</header>
+
+<section aria-labelledby="models-h">
+  <h2 id="models-h" class="section-title">Models on this server</h2>
+  <ul class="status-grid">
   {% for key, adapter in adapters.items() %}
     {% set ok = status[key][0] %}{% set reason = status[key][1] %}
-    <tr><td>{{ adapter.name }}</td>
-        <td>{% if ok %}Available{% else %}Not available: {{ reason }}{% endif %}</td>
-        <td><a href="{{ url_for(links[key]) }}">Upload</a></td></tr>
+    <li class="status-card card">
+      <div class="status-top">
+        <span class="module-icon">{{ icon(icons[key]) }}</span>
+        <h3>{{ adapter.name }}</h3>
+        {% if ok %}<span class="chip chip-validated">Available</span>
+        {% elif config.DEMO_MODE %}<span class="chip chip-demo">Demo output only</span>
+        {% else %}<span class="chip chip-not_yet_validated">Not available</span>{% endif %}
+      </div>
+      {% if not ok %}<p class="muted small">{{ "Not available: " ~ reason if not config.DEMO_MODE else "Model not installed: " ~ reason }}</p>{% endif %}
+      <a class="btn btn-quiet" href="{{ url_for(links[key]) }}">Open</a>
+    </li>
   {% endfor %}
-  </tbody>
-</table>
+  </ul>
+</section>
+
+{% if recent %}
+<section aria-labelledby="recent-h">
+  <h2 id="recent-h" class="section-title">This session</h2>
+  <div class="card">
+    <ul class="plain-list">
+      {% for r in recent %}
+        <li><span>{{ r.title }}</span>
+          <span class="chip chip-{{ r.label.status }}">{{ r.label.status_text }}</span>
+          {% if r.illustrative %}<span class="stamp stamp-inline">Illustrative</span>{% endif %}</li>
+      {% endfor %}
+    </ul>
+    <a class="btn btn-quiet" href="{{ url_for('main.report') }}">{{ icon("report") }} Download PDF report</a>
+  </div>
+</section>
+{% endif %}
+
+<section aria-labelledby="plan-h">
+  <h2 id="plan-h" class="section-title">Project schedule</h2>
+  <div class="card">
+    <div class="gantt" style="--cols: {{ plan.months|length }}">
+      <div class="g-head" aria-hidden="true">
+        <span></span>
+        <div class="g-months">{% for m in plan.months %}<span>{{ m }}</span>{% endfor %}</div>
+      </div>
+      {% for row in plan.rows %}
+        <div class="g-row">
+          <span class="g-label">{{ row.label }}<small>{{ row.owner }}</small></span>
+          <div class="g-track"><span class="g-bar" style="grid-column: {{ row.start }} / {{ row.end }}"></span></div>
+        </div>
+      {% endfor %}
+      {% if plan.today_pct is not none %}
+        <div class="g-today" style="--pos: {{ '%.4f'|format(plan.today_pct / 100) }}"><span>Today, {{ plan.today }}</span></div>
+      {% endif %}
+    </div>
+    <p class="muted small">October 2026 to May 2027. Platform release is planned for the end of January; December and January include exams, so treat them as buffer.</p>
+  </div>
+</section>
+
+{% if modules %}
+<section aria-labelledby="progress-h">
+  <h2 id="progress-h" class="section-title">Where each part stands</h2>
+  <div class="table-wrap card">
+    <table class="data">
+      <thead><tr><th scope="col">Part</th><th scope="col">Owner</th><th scope="col">Status</th><th scope="col">Next step</th></tr></thead>
+      <tbody>
+      {% for m in modules %}
+        <tr><th scope="row">{{ m.module }}</th><td>{{ m.owner }}</td><td>{{ m.status }}</td><td>{{ m.next }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="muted small">Read from <code>docs/STATUS.md</code>, the project's status record.</p>
+</section>
+{% endif %}
 {% endblock %}

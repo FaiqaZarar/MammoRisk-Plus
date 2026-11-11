@@ -1,30 +1,53 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}{{ title }} · {{ super() }}{% endblock %}
 {% block content %}
-<h1>{{ title }}</h1>
-<form method="post" enctype="multipart/form-data" class="form">
+{% set page_icon = {"mammogram": "mammogram", "mirai": "mirai", "prs": "dna"}[page] %}
+<header class="page-head">
+  <span class="page-icon">{{ icon(page_icon) }}</span>
+  <div>
+    <h1>{{ title }}</h1>
+    <p class="muted">{{ intro }}</p>
+  </div>
+</header>
+
+<form method="post" enctype="multipart/form-data" class="card upload" data-upload-form>
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  {% for name, text in fields %}
-    <label for="f-{{ name }}">{{ text }}</label>
-    <input id="f-{{ name }}" name="{{ name }}" type="file" accept="{{ accept }}">
-  {% endfor %}
-  <p class="hint">Files are processed in a temporary folder and deleted immediately afterwards.</p>
-  <button type="submit">Analyse</button>
+  <div class="drops{{ ' drops-views' if grid == 'views' }}">
+    {% for name, text in fields %}
+      <label class="drop" for="f-{{ name }}">
+        <span class="drop-icon">{{ icon("upload") }}</span>
+        <span class="drop-title">{{ text }}</span>
+        <span class="drop-file" data-file>No file chosen</span>
+        <input id="f-{{ name }}" name="{{ name }}" type="file" accept="{{ accept }}">
+      </label>
+    {% endfor %}
+  </div>
+  <div class="upload-foot">
+    <p class="hint">Files are processed in a temporary folder and deleted immediately afterwards.
+      {% if config.DEMO_MODE %}<strong>Demo mode is on:</strong> you will see sample output, not a real analysis.{% endif %}</p>
+    <button type="submit" class="btn btn-primary" data-submit>Analyse</button>
+  </div>
 </form>
+
 {% if results %}
-  <h2>Results</h2>
-  {% for r in results %}
-    <article class="result">
-      <h3>{{ r.title }}</h3>
-      {% if r.available %}
-        <dl>{% for k, v in r.values.items() %}<dt>{{ k }}</dt><dd>{{ v }}</dd>{% endfor %}</dl>
-        {% if r.image_data_uri %}<img src="{{ r.image_data_uri }}" alt="Explanation heatmap for {{ r.title }}">{% endif %}
-      {% else %}
-        <p class="unavailable" role="status">{{ r.message }}</p>
-      {% endif %}
-      {% with label = r.label %}{% include "_label.html" %}{% endwith %}
-    </article>
-  {% endfor %}
-  <p><a class="button" href="{{ url_for('main.report') }}">Download PDF report</a></p>
+  {% set both = results|length == 2 and results[0].available and results[1].available and page == "prs" %}
+  <section class="results" aria-labelledby="results-h" aria-live="polite">
+    <div class="results-head">
+      <h2 id="results-h">Results</h2>
+      <a class="btn btn-quiet" href="{{ url_for('main.report') }}">{{ icon("report") }} Download PDF report</a>
+    </div>
+    {% if both and results[0].values.category != results[1].values.category %}
+      <p class="callout">
+        <strong>The category changes with the reference.</strong>
+        European (CEU) reference: {{ results[0].values.category }}. Pakistani reference: {{ results[1].values.category }}.
+        We do not say which one is clinically correct.
+        {% if results[0].illustrative %}<span class="stamp stamp-inline">Illustrative, not real data</span>{% endif %}
+      </p>
+    {% endif %}
+    <div class="results-grid{{ ' results-compare' if page == 'prs' }}">
+      {% for r in results %}{% include "_result.html" %}{% endfor %}
+    </div>
+  </section>
 {% endif %}
 {% endblock %}

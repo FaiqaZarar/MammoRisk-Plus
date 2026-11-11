@@ -1,13 +1,66 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block content %}
-<h1>MammoRisk+</h1>
-<p class="lead">Breast cancer risk tools built on Western and European women are used without evidence that they
-classify Pakistani / South Asian women correctly. MammoRisk+ shows imaging and genetic risk results
-together with <strong>the datasets and populations each result was validated on</strong>.</p>
-<ul class="cards">
-  <li><h2>Mammogram classifier</h2><p>Benign vs malignant probability and an explanation heatmap (Module 3).</p></li>
-  <li><h2>Mirai risk</h2><p>1–5 year risk from the four standard views of one exam (Module 1).</p></li>
-  <li><h2>PRS-313</h2><p>Genetic risk standardised against a European (CEU) vs Pakistani reference (Module 2).</p></li>
-</ul>
+{% set pk = namespace(n=0) %}
+{% for l in labels %}{% if l.region_state("PK") == "validated" %}{% set pk.n = pk.n + 1 %}{% endif %}{% endfor %}
+
+<section class="hero">
+  <div class="hero-copy">
+    <h1>Risk tools should say who they were tested on.</h1>
+    <p class="lead">Breast cancer risk tools are built on Western and European women, then used without evidence
+      that they classify Pakistani and South Asian women correctly. MammoRisk+ measures how far they can be
+      trusted, and puts the answer on every result it shows.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="{{ url_for('main.login') }}">{{ icon("lock") }} Hospital login</a>
+      <a class="btn btn-quiet" href="{{ url_for('main.about') }}">See the evidence</a>
+    </div>
+  </div>
+
+  <div class="hero-figure card">
+    <h2 class="card-title">What has been tested, and where</h2>
+    {% include "_matrix.html" %}
+    <p class="matrix-note">
+      {% if pk.n == 0 %}<strong>No output has been validated on Pakistani women yet.</strong>
+      This column fills only when a real result is logged.
+      {% else %}<strong>{{ pk.n }} of {{ labels|length }} outputs</strong> have a validated result for Pakistani women.{% endif %}
+    </p>
+  </div>
+</section>
+
+<section class="band" aria-labelledby="modules-h">
+  <h2 id="modules-h">Three independent modules</h2>
+  <p class="band-sub">Imaging and genetic results are shown side by side but never combined: no public dataset has
+    mammograms and genomes from the same women.</p>
+  <ul class="module-grid">
+    <li class="module">
+      <span class="module-icon">{{ icon("mammogram") }}</span>
+      <h3>Mammogram classifier</h3>
+      <p>Benign or malignant probability for one mammogram, with an explanation heatmap showing where the model looked.</p>
+      <p class="module-tag">Module 3</p>
+    </li>
+    <li class="module">
+      <span class="module-icon">{{ icon("mirai") }}</span>
+      <h3>Mirai risk</h3>
+      <p>One to five year breast cancer risk from the four standard views of a single screening exam.</p>
+      <p class="module-tag">Module 1</p>
+    </li>
+    <li class="module">
+      <span class="module-icon">{{ icon("dna") }}</span>
+      <h3>PRS-313</h3>
+      <p>Genetic risk standardised against a European (CEU) and a Pakistani reference, so you can see when the category changes.</p>
+      <p class="module-tag">Module 2</p>
+    </li>
+  </ul>
+</section>
+
+<section class="band" aria-labelledby="claims-h">
+  <h2 id="claims-h">What it does not claim</h2>
+  <ul class="claims">
+    <li><strong>No diagnosis.</strong> This is a research prototype built on public datasets. Results must not be used to make decisions about any patient.</li>
+    <li><strong>No verdict on the genetic categories.</strong> We show how a category shifts between references. Without cancer outcomes we cannot say which one is right, and we do not give absolute risk.</li>
+    <li><strong>No result without its label.</strong> The software refuses to display or print a number that has no validation label.</li>
+  </ul>
+</section>
+
 <p class="disclaimer">{{ disclaimer }}</p>
 {% endblock %}

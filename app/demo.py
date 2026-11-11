@@ -12,6 +12,9 @@ from app import create_app
 
 if __name__ == "__main__":
     password = secrets.token_urlsafe(9)
-    app = create_app({"USERS": {"demo": generate_password_hash(password)}})
-    print(f"\nMammoRisk+ demo -> http://127.0.0.1:5055   login: demo / {password}\n")
+    # DEMO_MODE: result pages show clearly stamped ILLUSTRATIVE sample output while no model is installed.
+    app = create_app({"USERS": {"demo": generate_password_hash(password)}, "DEMO_MODE": True})
+    app.config["TEMPLATES_AUTO_RELOAD"] = True   # edit a template, then just refresh the page
+    print(f"\nMammoRisk+ demo -> http://127.0.0.1:5055   login: demo / {password}\n"
+          "Demo mode: result pages show sample output stamped ILLUSTRATIVE (not computed from your files).\n")
     app.run(host="127.0.0.1", port=5055)

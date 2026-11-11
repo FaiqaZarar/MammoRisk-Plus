@@ -3,6 +3,17 @@
 Newest first. One entry per meaningful change: date · module · what changed · files touched.
 
 ## 2026-11-12
+- **Platform:** frontend redesign (D-22). New design system (`app/static/css/style.css`, light/dark), app shell
+  with sidebar, landing page with the reliability matrix, result pages with SVG figures (`app/viz.py`),
+  Evidence page, dashboard with model status, session results and the project schedule
+  (`app/project_status.py`, reads `docs/STATUS.md`), styled error pages, optional `app/static/js/app.js`
+  (theme toggle, drag and drop, submit state). Templates: `base`, `index`, `login`, `dashboard`, `upload`,
+  `about`, `error`, `_icons`, `_matrix`, `_label`, `_result`.
+- **Platform:** demo mode (`app/services/demo.py`, `python -m app.demo` or `MAMMORISK_DEMO=1`): stamped
+  "Illustrative, not real data" sample output on pages and in the PDF; off by default, never in Docker.
+- **Platform:** labels gained `short` and `regions` (`app/labels.py`, `app/validation_labels.yaml`);
+  `LabelledResult.illustrative`; PDF prints the illustrative stamp (`app/report.py`).
+- **Tests:** `tests/test_app_frontend.py` (18 tests). Full suite: 97 passed, 1 skipped.
 - **Docs:** `docs/progress_update_2026-11-12.md`, a one-page update for the supervisor (status, blockers,
   requests, findings from real data, plan to the January release).
 - **Platform:** `app/demo.py`: `python -m app.demo` starts the app locally with a throwaway random login

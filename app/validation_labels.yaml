@@ -6,9 +6,14 @@
 # docs/STATUS.md (dataset, split, checkpoint, config, W&B run). Never type a number from memory.
 #
 # status: not_yet_validated | validated | exploratory
+#
+# short:   display name used in the reliability matrix and the dashboard.
+# regions: where the datasets come from (US CN IN VN EU PK). "planned" = dataset identified, shown as
+#          validated ONLY once `status` says so; "reference" = a reference distribution, no outcomes.
 
 m3_probability:
   output: "Malignancy probability (benign vs malignant)"
+  short: "Malignancy probability"
   module: "Module 3: classifier"
   datasets: ["CBIS-DDSM (internal test, patient-level 20%)", "CMMD (external)", "DMID (external)"]
   populations: ["USA (scanned film)", "China", "India"]
@@ -18,9 +23,11 @@ m3_probability:
   ci: null
   status: not_yet_validated
   source: null
+  regions: {US: planned, CN: planned, IN: planned}
 
 m3_heatmap:
   output: "Explanation heatmap (Grad-CAM / Score-CAM)"
+  short: "Explanation heatmap"
   module: "Module 3: explanations"
   datasets: ["CBIS-DDSM", "VinDr-Mammo", "DMID"]
   populations: ["USA", "Vietnam", "India"]
@@ -30,9 +37,11 @@ m3_heatmap:
   ci: null
   status: not_yet_validated
   source: null
+  regions: {US: planned, VN: planned, IN: planned}
 
 m1_mirai_risk:
   output: "1–5 year breast cancer risk (Mirai, pre-trained)"
+  short: "Mirai 1–5 year risk"
   module: "Module 1: Mirai"
   datasets: ["EMBED open 20% subset (external validation)"]
   populations: ["USA, racially diverse; Asian subgroup small"]
@@ -42,9 +51,11 @@ m1_mirai_risk:
   ci: null
   status: not_yet_validated
   source: null
+  regions: {US: planned}
 
 m2_prs_ceu:
   output: "PRS-313 standardised against a European (CEU) reference"
+  short: "PRS-313, European reference"
   module: "Module 2: PRS-313"
   datasets: ["1000 Genomes CEU (reference)", "PGS Catalog PGS000004 weights"]
   populations: ["European ancestry (Utah, CEU)"]
@@ -54,9 +65,11 @@ m2_prs_ceu:
   ci: null
   status: not_yet_validated
   source: null
+  regions: {EU: reference}
 
 m2_prs_pak:
   output: "PRS-313 standardised against a Pakistani reference"
+  short: "PRS-313, Pakistani reference"
   module: "Module 2: PRS-313"
   datasets: ["1000 Genomes PJL", "HGDP: 8 Pakistani groups (pooled, ~280)"]
   populations: ["Pakistani (pooled 9 groups)"]
@@ -66,3 +79,4 @@ m2_prs_pak:
   ci: null
   status: not_yet_validated
   source: null
+  regions: {PK: reference}

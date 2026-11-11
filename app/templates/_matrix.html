@@ -1,0 +1,39 @@
+{# Reliability matrix: which regions each output has been (or will be) tested on. Needs `labels`. #}
+{% macro dot(state) -%}
+<svg class="dot dot-{{ state }}" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+{%- if state == "validated" %}<circle cx="12" cy="12" r="9" class="d-fill"/><path d="M8 12.300l2.800 2.800L16.200 9.500" class="d-tick"/>
+{%- elif state == "exploratory" %}<circle cx="12" cy="12" r="9" class="d-ring"/><path d="M12 3a9 9 0 0 1 0 18z" class="d-fill"/>
+{%- elif state == "planned" %}<circle cx="12" cy="12" r="8.500" class="d-dash"/>
+{%- elif state == "reference" %}<circle cx="12" cy="12" r="8.500" class="d-ring"/><circle cx="12" cy="12" r="3" class="d-fill"/>
+{%- else %}<path d="M8 12h8" class="d-none"/>{%- endif -%}
+</svg>
+{%- endmacro %}
+{% set state_text = {"validated": "validated", "exploratory": "exploratory", "planned": "planned, not yet validated",
+                     "reference": "reference distribution only, no outcomes", "none": "no data"} %}
+<div class="matrix-wrap">
+<table class="matrix">
+  <caption class="sr-only">Regions each output has been, or will be, tested on</caption>
+  <thead>
+    <tr>
+      <th scope="col" class="m-out">Output</th>
+      {% for code, name in REGIONS.items() %}<th scope="col" class="m-reg{{ ' m-pk' if code == 'PK' }}">{{ name }}</th>{% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+  {% for label in labels %}
+    <tr>
+      <th scope="row" class="m-out">{{ label.display_name }}</th>
+      {% for code, name in REGIONS.items() %}
+        {% set st = label.region_state(code) %}
+        <td class="m-reg{{ ' m-pk' if code == 'PK' }}">{{ dot(st) }}<span class="sr-only">{{ name }}: {{ state_text[st] }}</span></td>
+      {% endfor %}
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+<ul class="legend" aria-label="Legend">
+  {% for st in ["validated", "exploratory", "planned", "reference", "none"] %}
+    <li>{{ dot(st) }} {{ state_text[st][0]|upper }}{{ state_text[st][1:] }}</li>
+  {% endfor %}
+</ul>

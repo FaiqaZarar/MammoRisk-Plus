@@ -5,7 +5,7 @@ Source for every line below: `docs/STATUS.md`, `docs/DECISIONS.md`, `CHANGELOG.m
 
 ## 1. Where we are (honest summary)
 All three modules, the shared evaluation library and the platform skeleton are **written and tested**
-(79 automated tests pass, 34 commits). **No model results exist yet**, because the datasets are only
+(97 automated tests pass). **No model results exist yet**, because the datasets are only
 now being brought in. The next two weeks turn code into numbers.
 
 | Module | Objective | State today | Next |
@@ -14,7 +14,7 @@ now being brought in. The next two weeks turn code into numbers.
 | Module 3 · classifier | O2 | Patient-level split made from the official CSVs: **3,032 images / 1,566 patients**, train/val/test 70/10/20, seed 42. Streaming cache builder tested; Kaggle training notebook written | Build cache on Kaggle, first EfficientNet-B3 vs ResNet-50 run |
 | Module 3 · explanations | O3 | Grad-CAM/Score-CAM + Pointing Game, energy-in-box, IoU, sanity check coded and unit-tested. VinDr-Mammo access granted; real annotation files checked | 200-image VinDr sample downloading; run after first checkpoint |
 | Module 1 · Mirai | O4 | Cohort builder, OncoServe client, C-index/td-AUC/calibration code written and tested | **Blocked on EMBED access** (section 2) |
-| Platform | O5 | Flask app runs: hospital login, upload pages, PDF report. Every output must carry a validation label (enforced in code) | Wire in models as they appear; Docker still untested |
+| Platform | O5 | Redesigned Flask app: hospital login, dashboard with project schedule, result pages with figures, Evidence page with a reliability matrix, PDF report. Every output must carry a validation label (enforced in code) | Wire in models as they appear; Docker still untested |
 | Evaluation library | all | DeLong, bootstrap CIs, IPCW C-index, time-dependent AUC, calibration, XAI scores | — |
 
 ## 2. Blockers and what I need from you
@@ -38,8 +38,9 @@ now being brought in. The next two weeks turn code into numbers.
 - Column names and category strings in the VinDr files match what our code expects.
 
 ## 4. Platform demo (runs on my laptop)
-`python -m app.demo` → http://127.0.0.1:5055. The **About & validation** page shows what the platform
-promises: each output (classifier, heatmap, Mirai risk, PRS under CEU and Pakistani references) lists the
+`python -m app.demo` → http://127.0.0.1:5055 (demo mode: result pages show sample output stamped
+"Illustrative, not real data", never computed from the uploaded file). The **Evidence and validation** page
+and the **reliability matrix** on the landing page show what the platform promises: each output (classifier, heatmap, Mirai risk, PRS under CEU and Pakistani references) lists the
 datasets and populations it was validated on, and currently says **"Not yet validated"** until a real result
 is logged. It also states "not validated on Pakistani women" explicitly. This is the reliability-labelling
 idea of O5 working end to end, before any model is plugged in.

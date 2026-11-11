@@ -1,11 +1,15 @@
+{# Validation label card. Needs `label`. Shown with every result and on the Evidence page. #}
 <section class="label status-{{ label.status }}" aria-label="Validation label: {{ label.output }}">
-  <h3>{{ label.output }} <span class="badge">{{ label.status_text }}</span></h3>
-  <dl>
-    <dt>Module</dt><dd>{{ label.module }}</dd>
-    <dt>Performance</dt><dd>{{ label.performance_text }}</dd>
-    <dt>Validated on</dt><dd>{{ label.datasets | join(", ") }}</dd>
-    <dt>Populations</dt><dd>{{ label.populations | join(", ") }}</dd>
-    <dt>Not validated on</dt><dd>{{ label.not_validated_on | join(", ") }}</dd>
-    {% if label.source %}<dt>Source</dt><dd>{{ label.source }}</dd>{% endif %}
+  <header class="label-head">
+    <h3>{{ "Validation label" if compact else label.output }}</h3>
+    <span class="chip chip-{{ label.status }}">{{ label.status_text }}</span>
+  </header>
+  <p class="label-perf">{{ label.performance_text }}</p>
+  <dl class="label-grid">
+    <div><dt>Module</dt><dd>{{ label.module }}</dd></div>
+    <div><dt>Validated on</dt><dd>{{ label.datasets | join(", ") }}</dd></div>
+    <div><dt>Populations</dt><dd>{{ label.populations | join(", ") }}</dd></div>
+    <div class="not-validated"><dt>Not validated on</dt><dd>{{ label.not_validated_on | join(", ") }}</dd></div>
+    {% if label.source %}<div><dt>Source</dt><dd>{{ label.source }}</dd></div>{% endif %}
   </dl>
 </section>

@@ -260,6 +260,30 @@ Entries D-14 to D-17 were made by Faiqa (with Claude Code) so the work wasn't bl
   (`vindr_sample_n200_seed42.csv`), reproducible from the CSVs + seed. Nothing is uploaded or committed.
 - **Decided by:** Faiqa (with Claude Code)
 
+### D-22 · 2026-11-12 · Platform frontend redesign, results pages, evidence page, stamped demo mode (PROPOSED, needs Manaal's review)
+- **Decision:** redesign the Flask frontend (D-16 skeleton) as a proper application: design system with
+  light/dark themes, app shell with sidebar after login, landing page, a **reliability matrix** (outputs x
+  regions: USA, China, India, Vietnam, Europe, Pakistan), result pages with figures (probability bar, Mirai
+  1-5 year bars, PRS reference curves with the D-14 risk bands), an Evidence page (matrix, labels, datasets
+  and limits, methods), a dashboard with model status, this-session results and the project schedule, and
+  styled error pages.
+- **Constraints kept:** no new Python dependencies; no JavaScript libraries, CDN or web fonts (inline SVG,
+  system fonts, ~60 lines of optional vanilla JS), so it runs offline in a hospital. Every result still needs
+  a validation label (D-16); the matrix cannot overstate: a region shows "validated" only when the label has a
+  value and source. Label schema gained optional `short` and `regions` fields (`app/validation_labels.yaml`).
+- **Demo mode (stamped illustrative output):** off by default; enabled only by `MAMMORISK_DEMO=1` or
+  `python -m app.demo`, never in Docker. When a model is missing it returns fixed sample numbers, each flagged
+  `illustrative`, stamped "Illustrative, not real data" on the page and in the PDF, with a banner; the label
+  still says "Not yet validated". The numbers are NOT computed from uploaded files. Alternative rejected:
+  empty states only (safer but nothing to show at the supervisor meeting). **Decided by:** Faiqa (asked).
+- **Project schedule/status on the dashboard** reads the module table from `docs/STATUS.md` at run time
+  (hidden if the file is missing, as in the Docker image, which ships only `app/`) and the revised timeline
+  from `app/project_status.py`.
+- **Open for Manaal:** wording of the pages, the login approach (D-16), whether `docs/STATUS.md` should be
+  copied into the image, and wiring real model outputs into the figures (adapters must return the keys the
+  figures read: `probability`/`threshold`, `1-year`..`5-year`, `z`/`percentile`).
+- **Decided by:** Faiqa (with Claude Code). **Manaal to confirm.**
+
 ---
 
 ## Deviations from the FIRST (July) literature review

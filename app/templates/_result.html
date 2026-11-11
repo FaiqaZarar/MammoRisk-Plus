@@ -1,0 +1,25 @@
+{# One result card: figure + values + its validation label. Needs `r` (a LabelledResult). #}
+<article class="result{{ ' is-illustrative' if r.illustrative }}{{ ' is-unavailable' if not r.available }}">
+  <header class="result-head">
+    <h3>{{ r.title }}</h3>
+    {% if r.illustrative %}<span class="stamp">Illustrative, not real data</span>{% endif %}
+  </header>
+  {% if r.available %}
+    <div class="result-body">
+      {% set fig = result_viz(r) %}
+      {% if fig %}<div class="figure">{{ fig }}</div>{% endif %}
+      {% if r.image_data_uri %}
+        <figure class="heat">
+          <img src="{{ r.image_data_uri }}" alt="Explanation heatmap for {{ r.title }}{{ ' (illustrative placeholder)' if r.illustrative }}">
+        </figure>
+      {% endif %}
+      <dl class="kv">
+        {% for k, v in r.values.items() %}<div><dt>{{ k | nice_key }}</dt><dd>{{ v | nice_value(k) }}</dd></div>{% endfor %}
+      </dl>
+    </div>
+    {% if r.illustrative %}<p class="note">Sample numbers for the demo. They were not computed from your file.</p>{% endif %}
+  {% else %}
+    <p class="unavailable" role="status">{{ r.message }}</p>
+  {% endif %}
+  {% with label = r.label, compact = true %}{% include "_label.html" %}{% endwith %}
+</article>

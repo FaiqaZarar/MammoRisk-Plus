@@ -1,14 +1,30 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}Hospital login · {{ super() }}{% endblock %}
 {% block content %}
-<h1>Hospital login</h1>
-<p>Diagnostic features are available to authorised hospital users only.</p>
-<form method="post" class="form">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <label for="username">Username</label>
-  <input id="username" name="username" autocomplete="username" required>
-  <label for="password">Password</label>
-  <input id="password" name="password" type="password" autocomplete="current-password" required>
-  <button type="submit">Log in</button>
-</form>
+<section class="login">
+  <div class="login-card card">
+    <h1>Hospital login</h1>
+    <p class="muted">Diagnostic features are available to authorised hospital users only.</p>
+    <form method="post" class="form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" name="username" autocomplete="username" autofocus required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">{{ icon("lock") }} Log in</button>
+    </form>
+  </div>
+  <aside class="login-side">
+    <h2>Why the login</h2>
+    <p>The classifier, Mirai and PRS pages process medical files. They sit behind a hospital account so that only
+      authorised staff can upload data.</p>
+    <p>Uploaded files are processed in a temporary folder and deleted straight afterwards. Nothing is stored on the server.</p>
+    <p><a href="{{ url_for('main.about') }}">Read what each result has been validated on</a> before you log in.</p>
+  </aside>
+</section>
 {% endblock %}

@@ -22,6 +22,30 @@ def _load_yaml(path: Path) -> dict:
     return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
 
 
+def _nice_key(key) -> str:
+    """'z' -> 'z-score', 'probability' -> 'Probability', '1-year' -> '1-year risk' (display only)."""
+    k = str(key)
+    special = {"z": "z-score", "percentile": "Percentile", "category": "Risk category"}
+    if k in special:
+        return special[k]
+    if k.endswith("-year"):
+        return k + " risk"
+    return k.replace("_", " ").capitalize()
+
+
+def _nice_value(value, key) -> str:
+    """Percent for probabilities and risks, two decimals for other floats (display only)."""
+    k = str(key)
+    if isinstance(value, float):
+        if k in ("probability", "threshold") or k.endswith("-year"):
+            return f"{100 * value:.1f}%"
+        if k == "percentile":
+            from app.viz import ordinal
+            return f"{ordinal(value)} percentile"
+        return f"{value:.2f}"
+    return str(value)
+
+
 def create_app(config: dict | None = None) -> Flask:
     from app.labels import load_labels
     from app.routes import bp
@@ -47,6 +71,9 @@ def create_app(config: dict | None = None) -> Flask:
         UPLOAD_TMP_DIR=app_cfg.get("upload_tmp_dir") or tempfile.gettempdir(),
         ALLOWED_EXTENSIONS=cfg.get("allowed_extensions", {}),
         APP_TITLE=app_cfg.get("title", "MammoRisk+"),
+        # Demo mode shows stamped ILLUSTRATIVE sample output when a model is missing. Off by default
+        # (and never set in Docker): enable with MAMMORISK_DEMO=1 or `python -m app.demo`.
+        DEMO_MODE=os.environ.get("MAMMORISK_DEMO") == "1",
     )
     app.config.update(config)  # test overrides last
     app.config["USERS"] = load_users(app.config)
@@ -60,6 +87,14 @@ def create_app(config: dict | None = None) -> Flask:
         "m2": PRSAdapter(labels, paths),
     }
 
-    app.jinja_env.globals["csrf_token"] = csrf_token
+    for adapter in app.extensions["adapters"].values():
+        adapter.demo_mode = bool(app.config["DEMO_MODE"])
+
+    from app.labels import REGIONS
+    from app.viz import result_viz
+
+    app.jinja_env.globals.update(csrf_token=csrf_token, result_viz=result_viz, REGIONS=REGIONS)
+    app.jinja_env.filters["nice_key"] = _nice_key
+    app.jinja_env.filters["nice_value"] = _nice_value
     app.register_blueprint(bp)
     return app

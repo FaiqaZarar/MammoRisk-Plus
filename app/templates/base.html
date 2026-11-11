@@ -1,35 +1,77 @@
+{% from "_icons.html" import icon %}
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232d3a8c'/%3E%3Cpath d='M7 9h6.5c5.200 1.600 8.800 5 9.500 9.500.4 2.700-1.500 5.500-4.800 5.500H7z' fill='white' fill-opacity='.92'/%3E%3Cpath d='M22 6v6M19 9h6' stroke='white' stroke-width='2.200' stroke-linecap='round'/%3E%3C/svg%3E">
   <title>{% block title %}{{ config.APP_TITLE }}{% endblock %}</title>
+  <script>try{var t=localStorage.getItem("mm-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
-  <header class="site">
-    <a class="brand" href="{{ url_for('main.index') }}">MammoRisk+</a>
-    <nav aria-label="Main">
-      <a href="{{ url_for('main.about') }}">About &amp; validation</a>
-      {% if session.user %}
-        <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
-        <form method="post" action="{{ url_for('main.logout') }}" class="inline">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="link">Log out ({{ session.user }})</button>
-        </form>
-      {% else %}
-        <a href="{{ url_for('main.login') }}">Hospital login</a>
+  <p class="strip" role="note">Research prototype: not for clinical or diagnostic use.</p>
+  {% if config.DEMO_MODE %}
+    <p class="strip strip-demo" role="note"><strong>Demo mode.</strong> Results marked &ldquo;Illustrative&rdquo; are sample output, not computed from your files.</p>
+  {% endif %}
+
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('main.index') }}" aria-label="MammoRisk+ home">
+      <svg class="brand-mark" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true" focusable="false">
+        <rect x="1" y="1" width="30" height="30" rx="8" class="bm-bg"/>
+        <path d="M7 9h6.500c5.200 1.600 8.800 5 9.500 9.500.4 2.700-1.500 5.500-4.800 5.500H7z" class="bm-shape"/>
+        <path d="M22 6v6M19 9h6" class="bm-plus"/>
+      </svg>
+      <span class="brand-name">MammoRisk<span class="brand-plus">+</span></span>
+    </a>
+    <nav class="topnav" aria-label="Main">
+      <a href="{{ url_for('main.about') }}"{% if request.endpoint == 'main.about' %} aria-current="page"{% endif %}>Evidence and validation</a>
+      {% if not session.user %}
+        <a class="btn btn-quiet" href="{{ url_for('main.login') }}">{{ icon("lock") }} Hospital login</a>
       {% endif %}
     </nav>
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch between light and dark theme">
+      <span class="t-moon">{{ icon("moon") }}</span><span class="t-sun">{{ icon("sun") }}</span>
+    </button>
   </header>
-  <p class="banner" role="note">Research prototype: not for clinical or diagnostic use.</p>
-  <main id="main">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% for cat, msg in messages %}<p class="flash {{ cat }}" role="alert">{{ msg }}</p>{% endfor %}
-    {% endwith %}
-    {% block content %}{% endblock %}
-  </main>
-  <footer class="site">MammoRisk+ · NUST SINES Final Year Project · every result states the populations it was validated on.</footer>
+
+  <div class="shell{{ ' has-side' if session.user }}">
+    {% if session.user %}
+    <aside class="side" aria-label="Application">
+      <nav class="sidenav" aria-label="Application">
+        {% set items = [("main.dashboard", "dashboard", "Dashboard"), ("main.mammogram", "mammogram", "Mammogram classifier"),
+                        ("main.mirai", "mirai", "Mirai risk"), ("main.prs", "dna", "PRS-313"),
+                        ("main.about", "evidence", "Evidence and validation")] %}
+        {% for ep, ic, text in items %}
+          <a href="{{ url_for(ep) }}"{% if request.endpoint == ep %} aria-current="page"{% endif %}>{{ icon(ic) }}<span>{{ text }}</span></a>
+        {% endfor %}
+      </nav>
+      <div class="side-foot">
+        {% if session.get("results") %}
+          <a class="side-link" href="{{ url_for('main.report') }}">{{ icon("report") }}<span>Download last report</span></a>
+        {% endif %}
+        <form method="post" action="{{ url_for('main.logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="side-link">{{ icon("logout") }}<span>Log out ({{ session.user }})</span></button>
+        </form>
+      </div>
+    </aside>
+    {% endif %}
+
+    <main id="main" class="main">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}<p class="flash {{ cat }}" role="alert">{{ msg }}</p>{% endfor %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <footer class="footer">
+    <p>MammoRisk+ is a NUST SINES final year project. Every result states the populations it was validated on.</p>
+    <p class="footer-sub">Public datasets only. Research prototype: it has not been validated on Pakistani women unless a label says so.</p>
+  </footer>
 </body>
 </html>
