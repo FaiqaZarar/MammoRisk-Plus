@@ -30,6 +30,8 @@ App release: end of January 2027 · Papers + thesis: Feb–May 2027
 ## Open questions
 See "Open items to confirm" in DECISIONS.md.
 
+Future work and extension ideas (not decided, not in scope): `docs/FUTURE_WORK.md`.
+
 ## Results log
 Every number: module · metric · value (95% CI) · dataset/split · config · run · date
 

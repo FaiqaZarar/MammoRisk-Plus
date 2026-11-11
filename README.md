@@ -182,6 +182,7 @@ and the new PLINK 2.0 PRS-313 pipeline (M2) is next. A chromosome 1 PRSice-2 pil
 - Fusion of imaging and genetic risk (needs a paired mammography + genotype dataset)
 - Validation on Pakistani hospital mammograms
 - Public Urdu awareness app
+- Extension ideas from the literature check (reclassification versus genetic distance, a case-level reliability flag, explanation reliability under dataset shift, calibration and threshold transfer): see `docs/FUTURE_WORK.md`. Not decided or in scope.
 
 ## Key references
 - Yala et al., Mirai, *Sci Transl Med* 2021; multi-institutional validation, *JCO* 2022

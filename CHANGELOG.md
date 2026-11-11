@@ -3,6 +3,9 @@
 Newest first. One entry per meaningful change: date · module · what changed · files touched.
 
 ## 2026-11-12
+- **Docs:** `docs/FUTURE_WORK.md` collects agreed future work and four extension ideas from the literature check
+  (B1 reclassification versus genetic distance, B2 case-level reliability flag, B3 explanation reliability under
+  shift, B4 calibration and threshold transfer), with cost, fit and a reading list. Nothing decided; README points to it.
 - **M3:** Added `module3_classifier/cache_vindr.py` (VinDr DICOM -> 1024x512 PNG cache + index with
   `boxes_cached`, same preprocessing as CBIS-DDSM, local-only output, size-mismatch refusal; D-23) and
   `tests/test_m3_cache_vindr.py` (6 tests on synthetic DICOMs). Run on 15 real sample images: flips, bounds and
