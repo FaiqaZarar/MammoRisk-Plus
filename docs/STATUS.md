@@ -1,5 +1,5 @@
 # Project Status: MammoRisk+
-_Last updated: 2026-11-11_
+_Last updated: 2026-11-12_
 
 App release: end of January 2027 · Papers + thesis: Feb–May 2027
 
@@ -9,7 +9,7 @@ App release: end of January 2027 · Papers + thesis: Feb–May 2027
 | M2 · PRS (O1, core) | Pukhraj | Oct–Nov | **Ready to run on Colab.** GRCh38 + gnomAD HGDP+1KG callset (D-19); samples step run on real metadata: 394 people (CEU 121, Pakistani pooled 273) | — (no PRS scores yet) | Run `notebooks/m2_prs_colab.ipynb`; record coverage + % reclassified here; Pukhraj reviews D-14/D-19 |
 | M1 · Mirai on EMBED (O4) | Faiqa | Nov–Dec | **Code done, no data yet.** Cohort builder, OncoServe client, evaluation (6 tests pass) | — | Get EMBED tables; verify `COLUMNS` + OncoServe API (D-15); install Docker |
 | M3 · Classifier (O2) | Faiqa, Manaal | Nov–Jan | **Split done; cache ready to build.** `splits/m3_cbis_split.csv` (3,032 images / 1,566 patients; D-20). Streaming fetcher tested on 3 real images | — | Run `notebooks/m3_cbis_cache_kaggle.ipynb` → private Kaggle dataset → `notebooks/m3_train_kaggle.ipynb` (written 2026-11-11, not run) once per backbone |
-| M3 · Explanations (O3) | Faiqa, Manaal | Nov–Jan | **Code written, not run.** Grad-CAM/Score-CAM + scores (`evaluation/xai.py` tested). VinDr: DUA signed, CSVs checked; 200-image seeded sample selected (D-21), download not started yet (about 13 h at the measured 72 KB/s) | — | Verify the sample (`fetch_vindr --sample 200 --verify`); write the VinDr PNG cache script; run after first trained checkpoint |
+| M3 · Explanations (O3) | Faiqa, Manaal | Nov–Jan | **Code written, not run.** Grad-CAM/Score-CAM + scores (`evaluation/xai.py` tested). VinDr: DUA signed, CSVs checked; 200-image seeded sample selected (D-21), download in progress (about 13 h at ~72 KB/s); cache script written and checked on 15 real images (D-23) | — | When the download finishes: `fetch_vindr --sample 200 --verify`, then `cache_vindr --sample 200`; run explanations after the first trained checkpoint |
 | Platform (O5) | Manaal | Dec–Jan | **Skeleton + new frontend done (2026-11-12, D-22).** Flask app, enforced validation labels, login/CSRF, PDF, reliability matrix, result pages with figures, evidence page, dashboard, stamped demo mode (37 app tests pass; Docker untested; D-16/D-22 await Manaal) | — | Manaal reviews D-16; wire adapters once models exist |
 | Evaluation (shared) | Faiqa | — | **Done.** DeLong, bootstrap, IPCW C-index, td-AUC, calibration, XAI scores (14 tests pass) | — | — |
 

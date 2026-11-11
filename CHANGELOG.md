@@ -3,6 +3,12 @@
 Newest first. One entry per meaningful change: date · module · what changed · files touched.
 
 ## 2026-11-12
+- **M3:** Added `module3_classifier/cache_vindr.py` (VinDr DICOM -> 1024x512 PNG cache + index with
+  `boxes_cached`, same preprocessing as CBIS-DDSM, local-only output, size-mismatch refusal; D-23) and
+  `tests/test_m3_cache_vindr.py` (6 tests on synthetic DICOMs). Run on 15 real sample images: flips, bounds and
+  box placement checked numerically. `explain.py` now uses only `status == ok` rows of an external index.
+  `preprocess.read_dicom` uses `pydicom.pixels.apply_voi_lut` (old module removed in pydicom 4). Full suite:
+  103 passed, 1 skipped.
 - **Platform:** frontend redesign (D-22). New design system (`app/static/css/style.css`, light/dark), app shell
   with sidebar, landing page with the reliability matrix, result pages with SVG figures (`app/viz.py`),
   Evidence page, dashboard with model status, session results and the project schedule

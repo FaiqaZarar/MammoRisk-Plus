@@ -284,6 +284,23 @@ Entries D-14 to D-17 were made by Faiqa (with Claude Code) so the work wasn't bl
   figures read: `probability`/`threshold`, `1-year`..`5-year`, `z`/`percentile`).
 - **Decided by:** Faiqa (with Claude Code). **Manaal to confirm.**
 
+### D-23 · 2026-11-12 · VinDr cache: same preprocessing as CBIS-DDSM, local only, boxes checked numerically
+- **Decision:** `module3_classifier/cache_vindr.py` turns the downloaded VinDr DICOMs into the 1024x512
+  16-bit PNG cache plus an index with lesion boxes in cached coordinates, using exactly the CBIS-DDSM
+  preprocessing (percentile normalisation, canonical left orientation, aspect-preserving resize and pad).
+  Reason: a score difference between datasets must not come from preprocessing.
+- **Safeguards:** an image whose DICOM size differs from the annotation's height/width is refused (the boxes
+  would be misplaced); failed or not-yet-downloaded images are recorded in the index and skipped by the
+  explanation code (`status == ok` only); the output folder must be outside the repo or under the gitignored
+  `data/` (licence: VinDr images are never committed, uploaded or shown).
+- **Check done (2026-11-12, 15 real images from the sample, numbers only, no images displayed):** exactly the
+  8 right-breast images were flipped and all 15 breasts end up on the left; all 20 boxes lie inside the image;
+  the real boxes have higher mean intensity than the rest of the tissue in 14 of 15 images and exceed the 75th
+  percentile of random same-size boxes in 15 of 15. This supports correct box placement after flip and scale.
+  It is not proof for every image; it is repeated when the full sample is cached.
+- **Alternative rejected:** checking by looking at overlays (VinDr licence forbids showing images).
+- **Decided by:** Faiqa (with Claude Code)
+
 ---
 
 ## Deviations from the FIRST (July) literature review

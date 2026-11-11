@@ -83,7 +83,10 @@ def transform_boxes(boxes, t: Transform) -> list[tuple[float, float, float, floa
 # ------------------------------------------------------------------------------------------------
 def read_dicom(path: str | Path) -> np.ndarray:
     import pydicom
-    from pydicom.pixel_data_handlers.util import apply_voi_lut
+    try:                                   # pydicom >= 3.0 (the old module is removed in 4.0)
+        from pydicom.pixels import apply_voi_lut
+    except ImportError:
+        from pydicom.pixel_data_handlers.util import apply_voi_lut
     ds = pydicom.dcmread(str(path))
     arr = ds.pixel_array
     try:

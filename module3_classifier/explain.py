@@ -91,6 +91,8 @@ def load_eval_table(cfg: dict, dataset: str) -> tuple[pd.DataFrame, Path]:
         return df.reset_index(drop=True), resolve(cfg["paths"]["cache_dir"])
     ext = cfg["external"][dataset]
     df = pd.read_csv(resolve(ext["index_csv"]))
+    if "status" in df.columns:          # cache indexes list every selected image; use only the cached ones
+        df = df[df["status"] == "ok"]
     df = df[df.label == 1]
     return df.reset_index(drop=True), resolve(ext["root"])
 
