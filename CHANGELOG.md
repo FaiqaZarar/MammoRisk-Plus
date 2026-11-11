@@ -5,10 +5,11 @@ Newest first. One entry per meaningful change: date · module · what changed ·
 ## 2026-11-11
 - **Data:** VinDr-Mammo DUA signed by Faiqa, files visible. `data/README.md` corrected: access is DUA only,
   not credentialed.
-- **M3:** Added `module3_classifier/fetch_vindr.py` (resumable, SHA256-verified downloader for the VinDr
-  subset of 788 images / 405 exams, ~13 GB; `--all-views` = 1,620 images, ~27 GB; password prompted, never
-  stored; reuses `load_vindr_boxes` so the download matches the scoring) and `tests/test_m3_fetch_vindr.py`.
-  Dry-run on the real CSVs gives the expected counts. Images not downloaded yet.
+- **M3:** Added `module3_classifier/fetch_vindr.py` and `tests/test_m3_fetch_vindr.py` (7 tests). It selects
+  the VinDr images for explanation scoring (788 images / 405 exams, ~13 GB; `--all-views` 1,620; `--sample N
+  --seed S` gives a balanced seeded sample), writes the wget URL list, and verifies SHA256. wget (WSL) does
+  the download because PhysioNet returned 403 to curl/Python (D-21). 3-image trial: login OK, hash check OK
+  on the first real image. 200-image sample list generated (100 mass + 100 calc).
 - **Data:** VinDr CSVs checked on the real files (columns, categories, subset size). Subset to download:
   788 images / 405 exams (~13 GB). Details in DECISIONS (D-18 open item).
 - **Docs:** DECISIONS open item D-18 updated with the VinDr column check and access rule (DUA only).

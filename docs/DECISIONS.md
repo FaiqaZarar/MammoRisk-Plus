@@ -241,6 +241,25 @@ Entries D-14 to D-17 were made by Faiqa (with Claude Code) so the work wasn't bl
 - **Supersedes** the CBIS part of D-17 (USB for raw CBIS). USB is still used for VinDr/CMMD.
 - **Decided by:** Faiqa (with Claude Code)
 
+### D-21 · 2026-11-11 · VinDr-Mammo: download via wget, and only a seeded sample (not all 788 images) at first
+- **Decision:** (1) VinDr files are downloaded with the real GNU wget (inside WSL) from a URL list written by
+  `module3_classifier/fetch_vindr.py`, which also selects the images and verifies SHA256. (2) The first
+  download is a **seeded sample of 200 images (100 mass + 100 calcification; 170 exams; ~3.4 GB)** drawn from
+  the 788 D-18 images, `--sample 200 --seed 42`, balanced and ordered so every prefix is balanced. The rest
+  can be fetched later.
+- **Why wget:** with a valid login and signed DUA, PhysioNet's file server returned **403 to curl.exe and to
+  Python urllib**, but accepted GNU wget (401 challenge, then 200). Cause not confirmed by PhysioNet
+  documentation (a third-party source says the server only serves clients identifying as Wget). We use the
+  documented client and do not spoof anything. winget's wget package failed its hash check, so wget from
+  WSL Ubuntu is used.
+- **Why a sample:** measured speed ~140 KB/s, so 788 images (~13 GB) would take about a day. Explanation
+  scores (Pointing Game etc.) need a sample, not the whole set. Alternative: full subset overnight.
+- **Effect on results:** VinDr explanation scores come from 200 of 788 eligible images. Report N, the seed,
+  the mass/calcification split, and that it is a sample. Vendors in VinDr are Siemens/Planmed/IMS (no Hologic).
+- **Licence:** files stay on `D:\mammorisk_data\vindr_mammo\` only. The sample list lives next to the data
+  (`vindr_sample_n200_seed42.csv`), reproducible from the CSVs + seed. Nothing is uploaded or committed.
+- **Decided by:** Faiqa (with Claude Code)
+
 ---
 
 ## Deviations from the FIRST (July) literature review

@@ -1,7 +1,7 @@
 import hashlib
+from pathlib import Path
 
 import pandas as pd
-import pytest
 
 from module3_classifier import fetch_vindr as V
 
@@ -27,14 +27,12 @@ def _write_csvs(root):
 
 def test_select_only_boxed_images(tmp_path):
     _write_csvs(tmp_path)
-    sel = V.select_images(tmp_path)
-    assert sorted(sel.image_id) == ["a", "c"]
+    assert sorted(V.select_images(tmp_path).image_id) == ["a", "c"]
 
 
 def test_select_all_views_keeps_whole_exam(tmp_path):
     _write_csvs(tmp_path)
-    sel = V.select_images(tmp_path, all_views=True)
-    assert sorted(sel.image_id) == ["a", "b", "c", "f"]   # exam S1 (4 images listed) + S2
+    assert sorted(V.select_images(tmp_path, all_views=True).image_id) == ["a", "b", "c", "f"]
 
 
 def test_parse_sha256sums():
@@ -42,25 +40,57 @@ def test_parse_sha256sums():
     assert V.parse_sha256sums(text) == {"images/s/x.dicom": "aaa", "images/s/y.dicom": "bbb"}
 
 
-def test_fetch_file_ok_skip_and_mismatch(tmp_path):
-    src = tmp_path / "src.bin"
-    src.write_bytes(b"dicom-bytes")
-    sha = hashlib.sha256(b"dicom-bytes").hexdigest()
-    url = src.as_uri()
-    dest = tmp_path / "out" / "x.dicom"
-
-    assert V.fetch_file(url, dest, "Basic x", sha) == "ok"
-    assert dest.read_bytes() == b"dicom-bytes"
-    assert not dest.with_name("x.dicom.part").exists()
-    assert V.fetch_file(url, dest, "Basic x", sha) == "skipped"          # resumable
-
-    bad = tmp_path / "out" / "y.dicom"
-    with pytest.raises(RuntimeError):
-        V.fetch_file(url, bad, "Basic x", "0" * 64, retries=1)           # wrong hash is never kept
-    assert not bad.exists() and not bad.with_name("y.dicom.part").exists()
+def test_wsl_path():
+    assert V.wsl_path(Path("D:/mammorisk_data/vindr_mammo")) == "/mnt/d/mammorisk_data/vindr_mammo"
+    assert V.wsl_path(Path("D:\\x\\y")) == "/mnt/d/x/y"
 
 
-def test_dry_run_needs_no_password(tmp_path, capsys):
+def test_url_list_and_wget_command(tmp_path, capsys):
     _write_csvs(tmp_path)
-    assert V.main(["--root", str(tmp_path), "--dry-run"]) == 0
-    assert "2 images in 2 exams" in capsys.readouterr().out
+    assert V.main(["--root", str(tmp_path), "--user", "me"]) == 0
+    urls = (tmp_path / "subset_urls.txt").read_text().splitlines()
+    assert urls == [V.BASE + "images/S1/a.dicom", V.BASE + "images/S2/c.dicom"]
+    out = capsys.readouterr().out
+    assert "2 images in 2 exams" in out and "--user me --ask-password" in out
+    assert "--password" not in out.replace("--ask-password", "")   # the script never takes a password
+
+
+def test_verify_reports_ok_missing_and_bad(tmp_path):
+    _write_csvs(tmp_path)
+    good = tmp_path / "images/S1/a.dicom"
+    good.parent.mkdir(parents=True)
+    good.write_bytes(b"ok-bytes")
+    sums = f"{hashlib.sha256(b'ok-bytes').hexdigest()}  images/S1/a.dicom\n{'0' * 64}  images/S2/c.dicom\n"
+    (tmp_path / "SHA256SUMS.txt").write_text(sums)
+    res = V.verify(tmp_path, V.select_images(tmp_path))
+    assert res["ok"] == 1 and res["missing"] == ["images/S2/c.dicom"]
+
+    bad = tmp_path / "images/S2/c.dicom"
+    bad.parent.mkdir(parents=True)
+    bad.write_bytes(b"corrupt")
+    res = V.verify(tmp_path, V.select_images(tmp_path))
+    assert res["ok"] == 1 and res["bad_hash"] == ["images/S2/c.dicom"] and not res["missing"]
+
+
+def test_sample_is_balanced_seeded_and_prefix_balanced(tmp_path):
+    rows = []
+    for i in range(10):   # 10 mass-only images, 6 calcification images, plus one with both (counts as calc)
+        rows.append((f"M{i}", f"m{i}", "['Mass']", "BI-RADS 4", 1, 2, 3, 4))
+    for i in range(6):
+        rows.append((f"C{i}", f"c{i}", "['Suspicious Calcification']", "BI-RADS 5", 1, 2, 3, 4))
+    rows.append(("B0", "b0", "['Mass', 'Suspicious Calcification']", "BI-RADS 4", 1, 2, 3, 4))
+    f = pd.DataFrame(rows, columns=["study_id", "image_id", "finding_categories", "finding_birads",
+                                    "xmin", "ymin", "xmax", "ymax"])
+    f["laterality"], f["view_position"], f["height"], f["width"] = "L", "CC", 100, 50
+    f.to_csv(tmp_path / "finding_annotations.csv", index=False)
+    sel = V.select_images(tmp_path)
+    assert len(sel) == 17
+
+    a = V.sample_images(tmp_path, sel, 8, seed=42)
+    b = V.sample_images(tmp_path, sel, 8, seed=42)
+    c = V.sample_images(tmp_path, sel, 8, seed=7)
+    assert list(a.image_id) == list(b.image_id)            # reproducible
+    assert list(a.image_id) != list(c.image_id)            # seed matters
+    assert a["group"].value_counts().to_dict() == {"mass": 4, "calcification": 4}   # balanced
+    assert a.head(4)["group"].value_counts().to_dict() == {"mass": 2, "calcification": 2}  # prefix balanced
+    assert V.sample_images(tmp_path, sel, 8, seed=42).image_id.is_unique
