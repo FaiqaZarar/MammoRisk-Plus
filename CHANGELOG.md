@@ -2,6 +2,12 @@
 
 Newest first. One entry per meaningful change: date · module · what changed · files touched.
 
+## 2026-11-12
+- **Docs:** `docs/progress_update_2026-11-12.md`, a one-page update for the supervisor (status, blockers,
+  requests, findings from real data, plan to the January release).
+- **Platform:** `app/demo.py`: `python -m app.demo` starts the app locally with a throwaway random login
+  (printed once, never stored).
+
 ## 2026-11-11
 - **Data:** VinDr-Mammo DUA signed by Faiqa, files visible. `data/README.md` corrected: access is DUA only,
   not credentialed.
