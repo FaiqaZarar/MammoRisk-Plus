@@ -271,7 +271,13 @@ Entries D-14 to D-17 were made by Faiqa (with Claude Code) so the work wasn't bl
 - [ ] D-18: verify CBIS-DDSM / CMMD / DMID / VinDr column names; first torch run on Kaggle/Colab.
   2026-11-11 (VinDr, from the PhysioNet data description, not the files): `finding_annotations.csv` columns
   match `load_vindr_boxes` (`study_id, image_id, laterality, view_position, height, width, finding_categories,
-  finding_birads, xmin..ymax`). Still to check on the real file: the exact category string for calcifications
-  (code expects "Suspicious Calcification"). VinDr access needs only the signed DUA (Restricted licence); no
+  finding_birads, xmin..ymax`). VinDr access needs only the signed DUA (Restricted licence); no
   credentialing/CITI. Only BI-RADS 3-5 findings are boxed.
+  **Checked on the real CSVs 2026-11-11** (`D:\mammorisk_data\vindr_mammo\`): columns match; the
+  calcification string is exactly "Suspicious Calcification"; `finding_annotations.csv` also has "No Finding"
+  rows (NaN boxes, NaN BI-RADS; dropped by `dropna`). D-18 rule (Mass or Suspicious Calcification, BI-RADS >= 4)
+  selects 1,039 boxes on **788 images in 405 exams** (592 mass, 376 calc images), about 13 GB of the 337.8 GB
+  (27 GB if all 4 views of those exams are kept). Only the subset is downloaded (D: has 212 GB free).
+  Vendors: Siemens 15,244 images, Planmed 3,796, IMS/Giotto 960 (no Hologic), so VinDr is a different vendor
+  mix from CBIS-DDSM; state this when interpreting explanation scores.
 - [ ] Any feedback from the synopsis defence panel, which should be recorded here as the next free D-number

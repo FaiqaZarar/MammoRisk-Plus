@@ -3,6 +3,14 @@
 Newest first. One entry per meaningful change: date · module · what changed · files touched.
 
 ## 2026-11-11
+- **Data:** VinDr-Mammo DUA signed by Faiqa, files visible. `data/README.md` corrected: access is DUA only,
+  not credentialed.
+- **M3:** Added `module3_classifier/fetch_vindr.py` (resumable, SHA256-verified downloader for the VinDr
+  subset of 788 images / 405 exams, ~13 GB; `--all-views` = 1,620 images, ~27 GB; password prompted, never
+  stored; reuses `load_vindr_boxes` so the download matches the scoring) and `tests/test_m3_fetch_vindr.py`.
+  Dry-run on the real CSVs gives the expected counts. Images not downloaded yet.
+- **Data:** VinDr CSVs checked on the real files (columns, categories, subset size). Subset to download:
+  788 images / 405 exams (~13 GB). Details in DECISIONS (D-18 open item).
 - **Docs:** DECISIONS open item D-18 updated with the VinDr column check and access rule (DUA only).
 - **M3:** Added `notebooks/m3_train_kaggle.ipynb`: Kaggle GPU notebook that trains one backbone per run
   (`MODEL = efficientnet_b3 | resnet50`) from the private `mammorisk-cbis-png-1024x512` dataset, checks the

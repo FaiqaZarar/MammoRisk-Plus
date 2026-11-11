@@ -16,7 +16,7 @@ licence) and EMBED images must never be shown or committed.
 | CBIS-DDSM | M3 | Train / val / test classifier | TCIA |
 | CMMD | M3 | External test | TCIA |
 | DMID | M3 | External test + explanations | Published dataset release |
-| VinDr-Mammo | M3 | Explanations only (lesion boxes) | PhysioNet (credentialed) |
+| VinDr-Mammo | M3 | Explanations only (lesion boxes) | PhysioNet (Restricted: sign the DUA only, no credentialing; signed 2026-11-11) |
 
 RSNA 2022 is **not** used, because it has no follow-up times (see DECISIONS D-07).
 
