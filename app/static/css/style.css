@@ -269,6 +269,8 @@ img { max-width: 100%; height: auto; }
 .error-page .lead { color: var(--ink-2); }
 
 /* ---------- responsive ---------- */
+.has-side .hero { grid-template-columns: 1fr; }   /* the sidebar already takes width: stack, so the matrix never clips */
+.has-side .hero-figure { max-width: 40rem; }
 @media (max-width: 62rem) {
   .hero { grid-template-columns: 1fr; }
   .login { grid-template-columns: 1fr; }
