@@ -268,5 +268,10 @@ Entries D-14 to D-17 were made by Faiqa (with Claude Code) so the work wasn't bl
 - [ ] D-14: Pukhraj to confirm risk categories, palindromic policy, bootstrap design
 - [ ] D-15: verify EMBED column names + OncoServe API on real files
 - [ ] D-16: Manaal to confirm login/CSRF approach and UI wording
-- [ ] D-18: verify CBIS-DDSM / CMMD / DMID / VinDr column names; first torch run on Kaggle/Colab
+- [ ] D-18: verify CBIS-DDSM / CMMD / DMID / VinDr column names; first torch run on Kaggle/Colab.
+  2026-11-11 (VinDr, from the PhysioNet data description, not the files): `finding_annotations.csv` columns
+  match `load_vindr_boxes` (`study_id, image_id, laterality, view_position, height, width, finding_categories,
+  finding_birads, xmin..ymax`). Still to check on the real file: the exact category string for calcifications
+  (code expects "Suspicious Calcification"). VinDr access needs only the signed DUA (Restricted licence); no
+  credentialing/CITI. Only BI-RADS 3-5 findings are boxed.
 - [ ] Any feedback from the synopsis defence panel, which should be recorded here as the next free D-number

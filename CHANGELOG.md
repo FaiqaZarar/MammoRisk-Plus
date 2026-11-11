@@ -3,6 +3,7 @@
 Newest first. One entry per meaningful change: date · module · what changed · files touched.
 
 ## 2026-11-11
+- **Docs:** DECISIONS open item D-18 updated with the VinDr column check and access rule (DUA only).
 - **M3:** Added `notebooks/m3_train_kaggle.ipynb`: Kaggle GPU notebook that trains one backbone per run
   (`MODEL = efficientnet_b3 | resnet50`) from the private `mammorisk-cbis-png-1024x512` dataset, checks the
   cache against the committed split (counts, no patient leakage), runs `module3_classifier.train`, then
