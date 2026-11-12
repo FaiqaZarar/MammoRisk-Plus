@@ -3,6 +3,11 @@
 Newest first. One entry per meaningful change: date · module · what changed · files touched.
 
 ## 2026-11-12
+- **M3 / Evaluation:** CPU smoke test of train, evaluate, compare and explain on synthetic data (D-24); it found
+  a bug in the IoU score (D-25): with a mostly-zero heatmap (typical for Grad-CAM) the "top 50%" selected the
+  whole image, so IoU equalled the area baseline. Fixed in `evaluation/xai.py` (`_top_pixels`, new field
+  `iou_selected_fraction`, also in `module3_classifier/explain.py` summaries); 3 regression tests. Also fixed
+  the EfficientNet-B3 parameter count in the `models.py` docstring. Full suite: 108 tests.
 - **Data:** the last 2 VinDr sample images downloaded. All 200 verified (SHA256) and cached (200 ok, 247 boxes
   all in bounds). Final numeric checks recorded in D-23.
 - **Data:** VinDr 200-image sample downloaded with wget (196 files, 3.3 GB, 9 h 23 min at about 107 KB/s). SHA256:

@@ -306,6 +306,37 @@ Entries D-14 to D-17 were made by Faiqa (with Claude Code) so the work wasn't bl
 - **Alternative rejected:** checking by looking at overlays (VinDr licence forbids showing images).
 - **Decided by:** Faiqa (with Claude Code)
 
+### D-24 · 2026-11-12 · CPU-only torch in the laptop .venv, for smoke tests only (amends D-17)
+- **Decision:** installed CPU torch 2.15, torchvision, timm and grad-cam (without its own OpenCV; the project
+  already has `opencv-python-headless`) into the project `.venv`. Purpose: run the real train, evaluate and
+  explain code end to end before spending Kaggle GPU hours. No training of real models happens on the laptop.
+- **Smoke test (synthetic data, 96 tiny images, random weights; the numbers mean nothing):** EfficientNet-B3
+  and ResNet-50 trained 6 epochs each (about 100 s per run on CPU); `evaluate run` gave DeLong and bootstrap
+  CIs, the val-chosen threshold and predictions; `evaluate compare` gave the paired DeLong test; `explain`
+  ran Grad-CAM, Score-CAM and the weight-randomisation check (Score-CAM about 10 min on CPU for 8 images).
+  The real VinDr cache (6 images, Grad-CAM) also ran, and with `save_overlays` requested no overlay, `.npy` or
+  image was written (licence guard works). ImageNet weights load for both backbones.
+- **Not verified:** GPU and AMP behaviour, speed on 1024x512 inputs, and any real model quality. The first
+  Kaggle run is still the real test.
+- **Decided by:** Faiqa (approved the install), with Claude Code.
+
+### D-25 · 2026-11-12 · IoU on the top 50% of pixels: ties at the threshold are excluded (fixes a bug)
+- **Problem found by the smoke test:** `IoU` used `heatmap >= median`. A Grad-CAM is ReLU'd, so after
+  normalisation a large block of pixels is exactly 0. When more than 50% are zero the median is 0 and every
+  pixel was selected, so IoU equalled the lesion's area fraction (the "area baseline") whatever the heatmap
+  showed. This would have silently corrupted the IoU results of O3.
+- **Decision:** when ties at the threshold push the selection beyond the requested fraction (more than 1%
+  slack), keep only pixels strictly above the threshold. So "top 50%" means the pixels the method actually
+  highlights, up to 50%. An all-zero heatmap scores IoU 0. The fraction really selected is now reported
+  (`iou_selected_fraction`) next to the threshold, per method, in the results.
+- **Alternatives rejected:** ranking pixels and picking exactly 50% (would add arbitrary zero-valued pixels,
+  so random placement of those would add noise); changing the top fraction (the 50% is CLAUDE.md's spec).
+- **Effect on the smoke test:** Grad-CAM IoU went from 0.0188 (exactly the baseline) to 0.0445, with 25% of
+  pixels selected. Three regression tests added (`tests/test_evaluation.py`).
+- **Thesis note:** report the selected fraction with the IoU, since it varies by method (a sparse heatmap
+  selects fewer than 50% of pixels).
+- **Decided by:** Faiqa (with Claude Code)
+
 ---
 
 ## Deviations from the FIRST (July) literature review

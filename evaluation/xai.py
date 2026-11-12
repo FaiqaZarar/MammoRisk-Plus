@@ -67,13 +67,29 @@ def energy_in_box(heatmap, mask) -> tuple[float, float]:
     return energy, float(m.mean())
 
 
+def _top_pixels(h: np.ndarray, top_fraction: float) -> tuple[np.ndarray, float]:
+    """Boolean mask of the heatmap's top ``top_fraction`` of pixels, and the threshold value used.
+
+    Ties matter here. A Grad-CAM is ReLU'd, so after normalisation a large block of pixels is EXACTLY 0.
+    When more than ``1 - top_fraction`` of the pixels are zero the quantile threshold is 0 and ``h >= thr``
+    would select every pixel; IoU then collapses to the lesion's area fraction whatever the heatmap shows
+    (found in the CPU smoke test, 2026-11-12). So when ties at the threshold inflate the selection beyond
+    the requested fraction, keep only pixels strictly above it: the pixels the method actually highlights,
+    up to the top fraction. The fraction really selected is reported (``iou_selected_fraction``).
+    """
+    thr = float(np.quantile(h, 1 - top_fraction))
+    b = h >= thr
+    if b.mean() > top_fraction + 0.01:       # 1% slack: continuous heatmaps select ~top_fraction + 1/N
+        b = h > thr
+    return b, thr
+
+
 def iou_top_fraction(heatmap, mask, top_fraction: float = 0.5) -> tuple[float, float]:
     """(IoU of the top-``top_fraction`` heatmap pixels with the mask, threshold value used)."""
     h, m = _check(heatmap, mask)
-    thr = float(np.quantile(h, 1 - top_fraction))
-    b = h >= thr
+    b, thr = _top_pixels(h, top_fraction)
     inter, union = np.logical_and(b, m).sum(), np.logical_or(b, m).sum()
-    return float(inter / union), thr
+    return (float(inter / union) if union else 0.0), thr
 
 
 def heatmap_similarity(h_a, h_b) -> float:
@@ -88,8 +104,10 @@ def heatmap_similarity(h_a, h_b) -> float:
 
 def score_all(heatmap, mask, top_fraction: float = 0.5, tol: int = 0) -> dict:
     """All localisation scores for one image, as a flat dict (one row of the results CSV)."""
+    h, _ = _check(heatmap, mask)
     energy, baseline = energy_in_box(heatmap, mask)
     iou, thr = iou_top_fraction(heatmap, mask, top_fraction)
+    selected = float(_top_pixels(h, top_fraction)[0].mean())
     return {"pointing_hit": pointing_game(heatmap, mask, tol), "energy_in_box": energy,
             "energy_baseline_area": baseline, "iou": iou, "iou_top_fraction": top_fraction,
-            "iou_threshold": thr}
+            "iou_threshold": thr, "iou_selected_fraction": selected}

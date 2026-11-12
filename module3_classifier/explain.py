@@ -147,7 +147,8 @@ def explain(cfg: dict, checkpoint: str, dataset: str, sanity: bool = False) -> d
             block[subset] = {"n": int(len(s)), "pointing_game": float(s.pointing_hit.mean()) if len(s) else None,
                              "energy_in_box": float(s.energy_in_box.mean()) if len(s) else None,
                              "energy_area_baseline": float(s.energy_baseline_area.mean()) if len(s) else None,
-                             "iou": float(s.iou.mean()) if len(s) else None}
+                             "iou": float(s.iou.mean()) if len(s) else None,
+                             "iou_selected_fraction": float(s.iou_selected_fraction.mean()) if len(s) else None}
         summary["by_method"][mname] = block
 
     if sanity:

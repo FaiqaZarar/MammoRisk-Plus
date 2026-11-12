@@ -5,7 +5,7 @@ mammograms, far too few to train a 25M-parameter CNN from scratch. Low-level Ima
 textures) transfer to mammograms.
 
 - ``resnet50``: the baseline. Widely used, so it makes results comparable with the literature.
-- ``efficientnet_b3``: compound-scaled, with fewer parameters (12M) and better accuracy per FLOP at
+- ``efficientnet_b3``: compound-scaled, with fewer parameters (~11M with the 2-class head) and better accuracy per FLOP at
   high resolution.
 - ``convnext_tiny``: included only because the defence deck listed it. Whether it stays is open
   (DECISIONS D-11).

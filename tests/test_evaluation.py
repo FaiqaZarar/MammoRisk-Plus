@@ -151,3 +151,34 @@ def test_xai_scores():
 def test_flat_heatmap_is_not_a_hit():
     mask = X.box_to_mask((10, 10), [(0, 0, 5, 5)])
     assert not X.pointing_game(np.ones((10, 10)), mask)
+
+
+def test_iou_with_a_mostly_zero_heatmap_does_not_select_the_whole_image():
+    # Regression test (found in the CPU smoke test, 2026-11-12). A ReLU'd Grad-CAM is mostly exact zeros. The
+    # old rule "h >= median" then had threshold 0 and selected EVERY pixel, so IoU collapsed to the lesion's
+    # area fraction (here 4%) however well the heatmap localised the lesion.
+    mask = X.box_to_mask((100, 100), [(40, 40, 60, 60)])           # lesion = 4% of the image
+    h = np.zeros((100, 100)); h[42:58, 42:58] = 1.0                 # heatmap fires inside the lesion only; 97.4% zeros
+    iou, thr = X.iou_top_fraction(h, mask, top_fraction=0.5)
+    assert iou == pytest.approx(256 / 400)                          # 16x16 hit inside the 20x20 box
+    assert iou > 0.5 > mask.mean()                                  # clearly better than the area baseline
+    assert thr == 0.0
+    # a heatmap that fires entirely OUTSIDE the lesion must score 0, not the baseline
+    h_off = np.zeros((100, 100)); h_off[5:20, 5:20] = 1.0
+    assert X.iou_top_fraction(h_off, mask, top_fraction=0.5)[0] == 0.0
+
+
+def test_iou_of_an_all_zero_heatmap_is_zero():
+    mask = X.box_to_mask((50, 50), [(10, 10, 20, 20)])
+    assert X.iou_top_fraction(np.zeros((50, 50)), mask)[0] == 0.0
+
+
+def test_iou_continuous_heatmap_still_uses_the_top_half_of_pixels():
+    rng = np.random.default_rng(1)
+    h = rng.random((100, 100))                                      # no ties
+    mask = X.box_to_mask((100, 100), [(0, 0, 50, 100)])
+    iou, thr = X.iou_top_fraction(h, mask, top_fraction=0.5)
+    sel = (h >= thr).mean()
+    assert 0.49 < sel < 0.51 and 0.3 < iou < 0.37                   # chance level for a half-image mask (~1/3)
+    # the selected fraction is reported so it can be stated alongside the threshold
+    assert X.score_all(h, mask)["iou_selected_fraction"] == pytest.approx(sel, abs=0.01)
