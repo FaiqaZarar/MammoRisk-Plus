@@ -3,6 +3,10 @@
 Newest first. One entry per meaningful change: date · module · what changed · files touched.
 
 ## 2026-11-12
+- **Data:** VinDr 200-image sample downloaded with wget (196 files, 3.3 GB, 9 h 23 min at about 107 KB/s). SHA256:
+  198 of 200 verified, 2 still to fetch. Cached with `cache_vindr.py`: 198 ok. Numeric checks on the full sample
+  (D-23). `cache_vindr.py` now clips boxes that overshoot the image edge (3 of 245 boxes); test added
+  (7 tests in `tests/test_m3_cache_vindr.py`).
 - **Docs:** `docs/FUTURE_WORK.md` collects agreed future work and four extension ideas from the literature check
   (B1 reclassification versus genetic distance, B2 case-level reliability flag, B3 explanation reliability under
   shift, B4 calibration and threshold transfer), with cost, fit and a reading list. Nothing decided; README points to it.

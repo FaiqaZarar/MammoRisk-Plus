@@ -117,3 +117,15 @@ def test_rerun_after_more_downloads_fills_in_missing_images(root, tmp_path_facto
     _write_dicom(root / rel_path("S3", "imgGone"), _breast("left"))     # the download finished meanwhile
     second = C.build_index(root, out).set_index("image_id")
     assert second.loc["imgGone", "status"] == "ok"
+
+
+def test_box_overshooting_the_image_edge_is_clipped(tmp_path, tmp_path_factory):
+    # real VinDr annotations sometimes extend past the image edge (x0 < 0 or x1 > width)
+    rows = [{"study_id": "S9", "image_id": "imgEdge", "laterality": "L", "view_position": "CC",
+             "height": H, "width": W, "finding_categories": "['Mass']", "finding_birads": "BI-RADS 4",
+             "xmin": -10, "ymin": 80, "xmax": 30, "ymax": 120}]
+    pd.DataFrame(rows).to_csv(tmp_path / "finding_annotations.csv", index=False)
+    _write_dicom(tmp_path / rel_path("S9", "imgEdge"), _breast("left"))
+    idx = C.build_index(tmp_path, tmp_path_factory.mktemp("cache")).set_index("image_id")
+    (x0, y0, x1, y1), = ast.literal_eval(str(idx.loc["imgEdge", "boxes_cached"]))
+    assert x0 == 0.0 and 0 < x1 <= 512 and 0 <= y0 < y1 <= 1024      # clipped at the left edge, still valid

@@ -79,8 +79,12 @@ def build_index(root: Path, out: Path, sample: int | None = None, seed: int = 42
             png = out / "images" / f"{r.image_id}.png"
             P.save_png16(small, png)
             cached = P.transform_boxes(r.boxes, t)
+            # A few annotations overshoot the image edge by up to ~27 original pixels (seen in 3 of 245 boxes
+            # on the 200-image sample). Clip to the cached image so every box is valid; drop an empty one.
+            clipped = [(max(0.0, x0), max(0.0, y0), min(float(W), x1), min(float(H), y1)) for x0, y0, x1, y1 in cached]
+            clipped = [b for b in clipped if b[2] > b[0] and b[3] > b[1]]
             rows.append({**rec, "status": "ok", "cache_path": f"images/{r.image_id}.png",
-                         "boxes_cached": [tuple(round(v, 2) for v in b) for b in cached],
+                         "boxes_cached": [tuple(round(v, 2) for v in b) for b in clipped],
                          "orig_h": t.orig_h, "orig_w": t.orig_w, "flipped": t.flipped, "scale": t.scale})
         except Exception as err:  # keep going; the failure is recorded in the index
             rows.append({**rec, "status": f"failed: {type(err).__name__}: {err}"})
