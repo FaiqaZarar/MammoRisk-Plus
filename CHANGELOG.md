@@ -3,6 +3,8 @@
 Newest first. One entry per meaningful change: date · module · what changed · files touched.
 
 ## 2026-11-12
+- **Data:** the last 2 VinDr sample images downloaded. All 200 verified (SHA256) and cached (200 ok, 247 boxes
+  all in bounds). Final numeric checks recorded in D-23.
 - **Data:** VinDr 200-image sample downloaded with wget (196 files, 3.3 GB, 9 h 23 min at about 107 KB/s). SHA256:
   198 of 200 verified, 2 still to fetch. Cached with `cache_vindr.py`: 198 ok. Numeric checks on the full sample
   (D-23). `cache_vindr.py` now clips boxes that overshoot the image edge (3 of 245 boxes); test added

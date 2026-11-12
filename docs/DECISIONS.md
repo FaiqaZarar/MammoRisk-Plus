@@ -293,14 +293,14 @@ Entries D-14 to D-17 were made by Faiqa (with Claude Code) so the work wasn't bl
   would be misplaced); failed or not-yet-downloaded images are recorded in the index and skipped by the
   explanation code (`status == ok` only); the output folder must be outside the repo or under the gitignored
   `data/` (licence: VinDr images are never committed, uploaded or shown).
-- **Check done (2026-11-12, numbers only, no images displayed).** First on 15 real images, then on the full
-  downloaded sample (`vindr_sample_n200_seed42`, 198 of 200 images cached; 2 not yet downloaded). Full-sample
-  results: every one of the 198 breasts ends up on the left; 90 images were flipped (89 are right-breast
+- **Check done (2026-11-12, numbers only, no images displayed).** First on 15 real images, then on the complete
+  sample (`vindr_sample_n200_seed42`, all 200 images downloaded, SHA256-verified and cached). Full-sample
+  results: every one of the 200 breasts ends up on the left; 91 images were flipped (90 are right-breast
   labels, plus one left-breast image whose raw file has the breast on the right, which the flip corrected);
-  the real boxes have higher mean intensity than the rest of the tissue in 189 of 198 images (mean 0.744 vs
-  0.531) and exceed the 75th percentile of random same-size boxes in 197 of 198. Three of 245 boxes overshot the
+  the real boxes have higher mean intensity than the rest of the tissue in 191 of 200 images (mean 0.744 vs
+  0.531) and exceed the 75th percentile of random same-size boxes in 199 of 200. Three of 247 boxes overshot the
   image edge in the source annotations (by 0.2 to 27 original pixels); they are now clipped to the image, so
-  all 245 are valid. This supports correct box placement after flip and scale. It is not proof for every
+  all 247 are valid. This supports correct box placement after flip and scale. It is not proof for every
   image, and the 9 images where the box is not brighter are small or low-contrast lesions, to be remembered
   when reading the explanation scores.
 - **Alternative rejected:** checking by looking at overlays (VinDr licence forbids showing images).
